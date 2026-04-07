@@ -582,8 +582,13 @@
             background: linear-gradient(135deg, #667eea, #764ba2);
         }
 
-        .theme-light .toggle-switch::after {
-            background: #fff;
+        .theme-light .upload-btn-small {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+        }
+
+        .theme-light .upload-btn-small:hover {
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
         }
 
         .focus-mode #controls {
@@ -944,6 +949,31 @@
             margin: 0;
         }
 
+        .tab-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .upload-btn-small {
+            background: linear-gradient(135deg, #0080FF, #0066CC);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .upload-btn-small:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(0, 128, 255, 0.4);
+        }
+
         .save-btn {
             background: linear-gradient(135deg, #0080FF, #0066CC);
             border: none;
@@ -1212,7 +1242,11 @@
                 <div id="libraryTab" class="tab-content active">
                     <div class="tab-header">
                         <h3>My Library</h3>
-                        <button id="saveToLibraryBtn" class="save-btn" disabled>💾 Save Current</button>
+                        <div class="tab-actions">
+                            <label for="libraryPdfFile" class="upload-btn-small">📄 Upload PDF</label>
+                            <input type="file" id="libraryPdfFile" accept=".pdf" style="display: none;">
+                            <button id="saveToLibraryBtn" class="save-btn" disabled>💾 Save Current</button>
+                        </div>
                     </div>
                     <div id="libraryList" class="library-list"></div>
                 </div>

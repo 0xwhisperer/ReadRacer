@@ -87,6 +87,9 @@ class PDFWordReader {
         this.currentStreakStat = document.getElementById('currentStreakStat');
         this.currentWPMStat = document.getElementById('currentWPMStat');
         
+        // Library upload button (new feature)
+        this.libraryPdfFile = document.getElementById('libraryPdfFile');
+        
         // Library and settings modals (may not exist in newer versions)
         this.libraryModal = document.getElementById('libraryModal');
         this.libraryList = document.getElementById('libraryList');
@@ -136,6 +139,11 @@ class PDFWordReader {
         }
         if (this.saveToLibraryBtn) {
             this.saveToLibraryBtn.addEventListener('click', () => this.saveToLibrary());
+        }
+        
+        // Library upload button
+        if (this.libraryPdfFile) {
+            this.libraryPdfFile.addEventListener('change', (e) => this.handleFileSelect(e));
         }
         
         // New UX event listeners (check if they exist)
