@@ -478,12 +478,15 @@
 
         .theme-light .nav-btn-small {
             background: rgba(45, 55, 72, 0.1);
+            backdrop-filter: blur(10px);
             color: #2d3748;
             border: 1px solid rgba(45, 55, 72, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
 
         .theme-light .nav-btn-small:hover:not(:disabled) {
             background: rgba(45, 55, 72, 0.2);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
         }
 
         .theme-light .side-panel {
@@ -866,20 +869,27 @@
         }
 
         .nav-btn-small {
-            width: 36px;
-            height: 36px;
-            border: none;
-            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
             background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
             color: #fff;
             cursor: pointer;
             font-size: 12px;
+            font-weight: 500;
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         .nav-btn-small:hover:not(:disabled) {
             background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
         }
 
         .nav-btn-small:disabled {
@@ -1165,6 +1175,36 @@
             gap: 8px;
         }
 
+        .library-item-actions .nav-btn-small {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-btn-small:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-btn-small:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
         .library-item-actions button {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -1448,9 +1488,10 @@
         }
     </style>
 </head>
-<body>
+<!-- Top Bar -->
     <div id="topBar">
         <div class="app-title">Read Racer v.01</div>
+        <div id="currentPDFTitle" style="color: rgba(255, 255, 255, 0.8); font-size: 14px; font-weight: 500;"></div>
         <button id="menuToggle" class="menu-btn">☰</button>
     </div>
 
@@ -1495,7 +1536,6 @@
     </div>
 
     <div id="display">
-        <div id="pdfTitle" style="display: none; color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 10px; text-align: center;"></div>
         <div id="contextPreview"></div>
         <div id="wordDisplay">Upload a PDF to begin.</div>
         <div id="progressBar">

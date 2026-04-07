@@ -63,7 +63,7 @@ class PDFWordReader {
         this.centerPauseBtn = document.getElementById('centerPauseBtn');
         this.saveToLibraryBtn = document.getElementById('saveToLibraryBtn');
         this.wordDisplay = document.getElementById('wordDisplay');
-        this.pdfTitle = document.getElementById('pdfTitle');
+        this.currentPDFTitle = document.getElementById('currentPDFTitle');
         this.contextPreview = document.getElementById('contextPreview');
         this.statusDisplay = document.getElementById('status');
         this.progressDisplay = document.getElementById('progress');
@@ -387,15 +387,14 @@ class PDFWordReader {
     }
 
     showPDFTitle(title) {
-        if (this.pdfTitle) {
-            this.pdfTitle.textContent = title;
-            this.pdfTitle.style.display = 'block';
+        if (this.currentPDFTitle) {
+            this.currentPDFTitle.textContent = title;
         }
     }
 
     hidePDFTitle() {
-        if (this.pdfTitle) {
-            this.pdfTitle.style.display = 'none';
+        if (this.currentPDFTitle) {
+            this.currentPDFTitle.textContent = '';
         }
     }
 
