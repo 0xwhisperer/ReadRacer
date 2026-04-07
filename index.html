@@ -5,1587 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Word Reader</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background-color: #000;
-            color: #fff;
-            font-family: 'Courier New', monospace;
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #controls {
-            background-color: #111;
-            padding: 20px;
-            border-bottom: 1px solid #333;
-            z-index: 10;
-        }
-
-        .control-group {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        label {
-            font-size: 14px;
-            color: #ccc;
-        }
-
-        input[type="file"] {
-            color: #fff;
-            background-color: #222;
-            border: 1px solid #444;
-            padding: 5px;
-            border-radius: 3px;
-        }
-
-        input[type="number"], input[type="range"] {
-            background-color: #222;
-            color: #fff;
-            border: 1px solid #444;
-            padding: 5px;
-            border-radius: 3px;
-            width: 80px;
-        }
-
-        select {
-            background-color: #222;
-            color: #fff;
-            border: 1px solid #444;
-            padding: 5px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
-        }
-
-        button {
-            background-color: #333;
-            color: #fff;
-            border: 1px solid #555;
-            padding: 8px 15px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-        }
-
-        button:hover {
-            background-color: #444;
-        }
-
-        button:disabled {
-            background-color: #222;
-            color: #666;
-            cursor: not-allowed;
-        }
-
-        #display {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-
-        #wordDisplay {
-            font-size: 48px;
-            text-align: center;
-            color: #fff;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-            letter-spacing: 0.1em;
-        }
-
-        #wordDisplay[style*="cursor: pointer"] {
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        #wordDisplay[style*="cursor: pointer"]:hover {
-            color: #0080FF;
-            transform: scale(1.02);
-        }
-
-        #playbackControls {
-            position: absolute;
-            bottom: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            z-index: 5;
-        }
-
-        .play-btn, .pause-btn {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: #333;
-            color: #fff;
-            border: 2px solid #555;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 20px;
-            transition: all 0.2s ease;
-        }
-
-        .play-btn:hover, .pause-btn:hover {
-            background-color: #444;
-            border-color: #666;
-            transform: scale(1.05);
-        }
-
-        .play-btn:disabled, .pause-btn:disabled {
-            background-color: #222;
-            color: #666;
-            cursor: not-allowed;
-            transform: scale(1);
-        }
-
-        #status {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #666;
-            font-size: 14px;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        #progress {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #666;
-            font-size: 12px;
-        }
-
-        #libraryModal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-        }
-
-        #libraryContent {
-            background-color: #111;
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid #333;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 800px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .library-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            color: #fff;
-        }
-
-        .library-item {
-            background-color: #222;
-            border: 1px solid #444;
-            border-radius: 4px;
-            padding: 15px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .library-item:hover {
-            background-color: #333;
-        }
-
-        .library-item-info {
-            flex: 1;
-            color: #fff;
-        }
-
-        .library-item-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .library-item-meta {
-            font-size: 12px;
-            color: #888;
-        }
-
-        .library-item-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .close-modal {
-            background-color: #333;
-            color: #fff;
-            border: 1px solid #555;
-            padding: 10px 15px;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-
-        .close-modal:hover {
-            background-color: #444;
-        }
-
-        #settingsModal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-        }
-
-        #settingsContent {
-            background-color: #111;
-            margin: 2% auto;
-            padding: 20px;
-            border: 1px solid #333;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 900px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .settings-section {
-            margin-bottom: 25px;
-            padding: 15px;
-            background-color: #222;
-            border-radius: 6px;
-        }
-
-        .settings-section h3 {
-            color: #fff;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #444;
-            padding-bottom: 8px;
-        }
-
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            color: #ccc;
-        }
-
-        .setting-item label {
-            flex: 1;
-            margin-right: 15px;
-        }
-
-        .toggle-switch {
-            position: relative;
-            width: 50px;
-            height: 24px;
-            background-color: #444;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .toggle-switch.active {
-            background-color: #0080FF;
-        }
-
-        .toggle-switch::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 20px;
-            height: 20px;
-            background-color: #fff;
-            border-radius: 50%;
-            transition: transform 0.3s;
-        }
-
-        .toggle-switch.active::after {
-            transform: translateX(26px);
-        }
-
-        #progressBar {
-            position: absolute;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            max-width: 600px;
-            height: 4px;
-            background-color: #333;
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        #progressFill {
-            height: 100%;
-            background-color: #0080FF;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        #contextPreview {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 48px;
-            font-family: 'Courier New', monospace;
-            color: #333;
-            text-align: center;
-            pointer-events: none;
-        }
-
-        .theme-light {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #2d3748;
-        }
-
-        .theme-light #topBar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .theme-light .app-title {
-            color: #2d3748;
-        }
-
-        .theme-light #pdfTitle {
-            color: rgba(45, 55, 72, 0.8);
-        }
-
-        .theme-light .menu-btn {
-            background: rgba(45, 55, 72, 0.1);
-            border: 1px solid rgba(45, 55, 72, 0.2);
-            color: #2d3748;
-        }
-
-        .theme-light .menu-btn:hover {
-            background: rgba(45, 55, 72, 0.2);
-        }
-
-        .theme-light .close-btn {
-            background: rgba(45, 55, 72, 0.1);
-            color: #2d3748;
-        }
-
-        .theme-light .close-btn:hover {
-            background: rgba(45, 55, 72, 0.2);
-        }
-
-        .theme-light #controls {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 12px;
-        }
-
-        .theme-light .file-label {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-            border: none;
-        }
-
-        .theme-light .file-label:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .theme-light .speed-control label,
-        .theme-light .font-control label {
-            color: #4a5568;
-        }
-
-        .theme-light .speed-control input,
-        .theme-light .font-control input {
-            background: rgba(45, 55, 72, 0.1);
-            border: 1px solid rgba(45, 55, 72, 0.2);
-            color: #2d3748;
-        }
-
-        .theme-light .unit {
-            color: #718096;
-        }
-
-        .theme-light #wordDisplay {
-            color: #1a202c;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        .theme-light #contextPreview {
-            color: #718096;
-        }
-
-        .theme-light #progressBar {
-            background: rgba(45, 55, 72, 0.2);
-        }
-
-        .theme-light #progressFill {
-            background: linear-gradient(90deg, #667eea, #764ba2);
-        }
-
-        .theme-light .floating-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-
-        .theme-light .control-btn.primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-        }
-
-        .theme-light .control-btn.primary:hover:not(:disabled) {
-            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-        }
-
-        .theme-light .control-btn.secondary {
-            background: rgba(45, 55, 72, 0.1);
-            color: #2d3748;
-            border: 1px solid rgba(45, 55, 72, 0.2);
-        }
-
-        .theme-light .control-btn.secondary:hover:not(:disabled) {
-            background: rgba(45, 55, 72, 0.2);
-        }
-
-        .theme-light .control-btn.tertiary {
-            background: rgba(45, 55, 72, 0.05);
-            color: #2d3748;
-            border: 1px solid rgba(45, 55, 72, 0.1);
-        }
-
-        .theme-light .control-btn.tertiary:hover:not(:disabled) {
-            background: rgba(45, 55, 72, 0.1);
-        }
-
-        .theme-light .nav-btn-small {
-            background: rgba(45, 55, 72, 0.1);
-            backdrop-filter: blur(10px);
-            color: #2d3748;
-            border: 1px solid rgba(45, 55, 72, 0.2);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .theme-light .nav-btn-small:hover:not(:disabled) {
-            background: rgba(45, 55, 72, 0.2);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        .theme-light .side-panel {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(20px);
-            border-left: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .theme-light .panel-header h2 {
-            color: #2d3748;
-        }
-
-        .theme-light .close-btn {
-            background: rgba(45, 55, 72, 0.1);
-            color: #2d3748;
-        }
-
-        .theme-light .close-btn:hover {
-            background: rgba(45, 55, 72, 0.2);
-        }
-
-        .theme-light .tab-btn {
-            color: rgba(45, 55, 72, 0.6);
-        }
-
-        .theme-light .tab-btn.active {
-            color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        .theme-light .tab-btn:hover:not(.active) {
-            color: rgba(45, 55, 72, 0.8);
-        }
-
-        .theme-light .setting-group {
-            background: rgba(45, 55, 72, 0.05);
-            border-radius: 12px;
-        }
-
-        .theme-light .setting-group h4 {
-            color: #2d3748;
-        }
-
-        .theme-light .setting-item {
-            color: rgba(45, 55, 72, 0.8);
-        }
-
-        .theme-light .setting-item select {
-            background: rgba(45, 55, 72, 0.1);
-            border: 1px solid rgba(45, 55, 72, 0.2);
-            color: #2d3748;
-        }
-
-        .theme-light .stat-card {
-            background: rgba(45, 55, 72, 0.05);
-        }
-
-        .theme-light .stat-number {
-            color: #667eea;
-        }
-
-        .theme-light .stat-label {
-            color: rgba(45, 55, 72, 0.6);
-        }
-
-        .theme-light .library-item {
-            background: rgba(45, 55, 72, 0.05);
-            border: 1px solid rgba(45, 55, 72, 0.1);
-        }
-
-        .theme-light .library-item:hover {
-            background: rgba(45, 55, 72, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-        }
-
-        .theme-light .library-item-title {
-            color: #2d3748;
-        }
-
-        .theme-light .library-item-meta {
-            color: rgba(45, 55, 72, 0.6);
-        }
-
-        .theme-light .library-item-actions button {
-            background: rgba(45, 55, 72, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(45, 55, 72, 0.2);
-            color: #2d3748;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .theme-light .library-item-actions button:hover {
-            background: rgba(45, 55, 72, 0.2);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-        }
-
-        .theme-light .save-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-        }
-
-        .theme-light .save-btn:hover:not(:disabled) {
-            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-        }
-
-        .theme-light .library-item-actions button:first-child {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-        }
-
-        .theme-light .library-item-actions button:first-child:hover {
-            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-        }
-
-        .theme-light .library-item-actions button:nth-child(2) {
-            background: linear-gradient(135deg, #FFA500, #FF8C00);
-        }
-
-        .theme-light .library-item-actions button:nth-child(2):hover {
-            box-shadow: 0 4px 16px rgba(255, 165, 0, 0.4);
-        }
-
-        .theme-light .library-item-actions button:last-child {
-            background: linear-gradient(135deg, #FF4444, #CC0000);
-        }
-
-        .theme-light .library-item-actions button:last-child:hover {
-            box-shadow: 0 4px 16px rgba(255, 68, 68, 0.4);
-        }
-
-        .theme-light .toggle-switch {
-            background: rgba(45, 55, 72, 0.2);
-        }
-
-        .theme-light .toggle-switch.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-        }
-
-        .theme-light .upload-btn-small {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-        }
-
-        .theme-light .upload-btn-small:hover {
-            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-        }
-
-        .focus-mode #controls {
-            opacity: 0.1;
-            transition: opacity 0.3s ease;
-        }
-
-        .focus-mode #controls:hover {
-            opacity: 1;
-        }
-
-        #statsDisplay {
-            position: absolute;
-            top: 60px;
-            right: 20px;
-            background-color: rgba(0,0,0,0.8);
-            color: #fff;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            max-width: 200px;
-        }
-
-        .nav-controls {
-            position: absolute;
-            bottom: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-        }
-
-        .nav-btn {
-            background-color: #333;
-            color: #fff;
-            border: 1px solid #555;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .nav-btn:hover {
-            background-color: #444;
-        }
-
-        .nav-btn:disabled {
-            background-color: #222;
-            color: #666;
-            cursor: not-allowed;
-        }
-
-        /* Top Bar */
-        #topBar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .app-title {
-            color: #fff;
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .menu-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .menu-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }    transform: scale(1.05);
-        }
-
-        /* Controls Redesign */
-        #controls {
-            position: fixed;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 15px 20px;
-            z-index: 99;
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .file-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            padding: 8px 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #fff;
-        }
-
-        .file-label:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px);
-        }
-
-        .file-label input[type="file"] {
-            display: none;
-        }
-
-        .upload-icon {
-            font-size: 16px;
-        }
-
-        .upload-text {
-            font-size: 14px;
-        }
-
-        .speed-control, .font-control {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #fff;
-        }
-
-        .speed-control label, .font-control label {
-            font-size: 12px;
-            opacity: 0.8;
-        }
-
-        .speed-control input, .font-control input {
-            width: 60px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            padding: 4px 8px;
-            color: #fff;
-            text-align: center;
-        }
-
-        .unit {
-            font-size: 11px;
-            opacity: 0.6;
-        }
-
-        /* Floating Control Panel */
-        .floating-panel {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 12px;
-            z-index: 98;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-
-        .control-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .control-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .control-btn {
-            width: 48px;
-            height: 48px;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 18px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .control-btn.primary {
-            background: linear-gradient(135deg, #0080FF, #0066CC);
-            color: #fff;
-        }
-
-        .control-btn.primary:hover:not(:disabled) {
-            transform: scale(1.1);
-            box-shadow: 0 4px 16px rgba(0, 128, 255, 0.4);
-        }
-
-        .control-btn.secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .control-btn.secondary:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .control-btn.tertiary {
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .control-btn.tertiary:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .control-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        .nav-btn-small {
-            width: 40px;
-            height: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            color: #fff;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .nav-btn-small:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        .nav-btn-small:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        /* Side Panel */
-        .side-panel {
-            position: fixed;
-            top: 0;
-            right: -400px;
-            width: 400px;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(20px);
-            border-left: 1px solid rgba(255, 255, 255, 0.1);
-            transition: right 0.3s ease;
-            z-index: 200;
-            overflow-y: auto;
-        }
-
-        .side-panel.open {
-            right: 0;
-        }
-
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .panel-header h2 {
-            color: #fff;
-            margin: 0;
-            font-size: 20px;
-        }
-
-        .close-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: #fff;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 18px;
-            transition: all 0.3s ease;
-        }
-
-        .close-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .panel-tabs {
-            display: flex;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .tab-btn {
-            flex: 1;
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.6);
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-        }
-
-        .tab-btn.active {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .tab-btn:hover:not(.active) {
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .panel-content {
-            padding: 20px;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .tab-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .tab-header h3 {
-            color: #fff;
-            margin: 0;
-            font-size: 18px;
-        }
-
-        .close-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .close-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .tab-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .upload-btn-small {
-            background: linear-gradient(135deg, #0080FF, #0066CC);
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s ease;
-            border: none;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .upload-btn-small:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(0, 128, 255, 0.4);
-        }
-
-        .save-btn {
-            background: linear-gradient(135deg, #0080FF, #0066CC);
-            border: none;
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .save-btn:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(0, 128, 255, 0.4);
-        }
-
-        .save-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        /* Settings Grid */
-        .settings-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .setting-group {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 16px;
-        }
-
-        .setting-group h4 {
-            color: #fff;
-            margin: 0 0 12px 0;
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 13px;
-        }
-
-        .setting-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .setting-item select {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            border-radius: 6px;
-            padding: 4px 8px;
-            font-size: 12px;
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .stat-number {
-            color: #0080FF;
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-
-        .stat-label {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 12px;
-        }
-
-        /* Library List */
-        .library-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .library-item {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .library-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #0080FF, #0066CC);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .library-item:hover::before {
-            opacity: 1;
-        }
-
-        .library-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-4px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .library-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
-        }
-
-        .library-item-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .library-item-title {
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 8px;
-            color: #fff;
-            line-height: 1.3;
-        }
-
-        .library-item-meta {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-            line-height: 1.4;
-        }
-
-        .library-item-actions {
-            display: flex;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-
-        .library-item-actions button {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .library-item-actions button:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-        }
-
-        .library-item-actions button:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .library-item-actions .nav-btn-small {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            padding: 8px 12px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s ease;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 500;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .nav-btn-small:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        .nav-btn-small:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        .library-item-actions button {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 11px;
-            transition: all 0.3s ease;
-        }
-
-        .library-item-actions button:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .library-item-actions button:first-child {
-            background: linear-gradient(135deg, #0080FF, #0066CC);
-            border: none;
-        }
-
-        .library-item-actions button:first-child:hover {
-            box-shadow: 0 4px 16px rgba(0, 128, 255, 0.4);
-        }
-
-        .library-item-actions button:nth-child(2) {
-            background: linear-gradient(135deg, #FFA500, #FF8C00);
-            border: none;
-        }
-
-        .library-item-actions button:nth-child(2):hover {
-            box-shadow: 0 4px 16px rgba(255, 165, 0, 0.4);
-        }
-
-        .library-item-actions button:last-child {
-            background: linear-gradient(135deg, #FF4444, #CC0000);
-            border: none;
-        }
-
-        .library-item-actions button:last-child:hover {
-            box-shadow: 0 4px 16px rgba(255, 68, 68, 0.4);
-        }
-
-        /* Modal Styling */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.show {
-            display: flex;
-        }
-
-        .modal-content {
-            background: rgba(20, 20, 20, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 0;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 24px 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .modal-header h3 {
-            color: #fff;
-            margin: 0;
-            font-size: 18px;
-        }
-
-        .modal-close {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .modal-close:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .modal-body {
-            padding: 24px;
-        }
-
-        .modal-body label {
-            display: block;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .modal-body input {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 16px;
-            margin-bottom: 20px;
-            box-sizing: border-box;
-        }
-
-        .modal-body input:focus {
-            outline: none;
-            border-color: #0080FF;
-            box-shadow: 0 0 0 3px rgba(0, 128, 255, 0.1);
-        }
-
-        .modal-body input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-
-        .modal-btn {
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border: none;
-        }
-
-        .modal-btn.cancel {
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .modal-btn.cancel:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .modal-btn.confirm {
-            background: linear-gradient(135deg, #0080FF, #0066CC);
-            color: #fff;
-        }
-
-        .modal-btn.confirm:hover {
-            box-shadow: 0 4px 16px rgba(0, 128, 255, 0.4);
-        }
-
-        /* Light theme modal */
-        .theme-light .modal-content {
-            background: rgba(255, 255, 255, 0.95);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .theme-light .modal-header h3 {
-            color: #2d3748;
-        }
-
-        .theme-light .modal-close {
-            background: rgba(45, 55, 72, 0.1);
-            color: #2d3748;
-            border: 1px solid rgba(45, 55, 72, 0.2);
-        }
-
-        .theme-light .modal-close:hover {
-            background: rgba(45, 55, 72, 0.2);
-        }
-
-        .theme-light .modal-body label {
-            color: rgba(45, 55, 72, 0.8);
-        }
-
-        .theme-light .modal-body input {
-            background: rgba(45, 55, 72, 0.1);
-            border: 1px solid rgba(45, 55, 72, 0.2);
-            color: #2d3748;
-        }
-
-        .theme-light .modal-body input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .theme-light .modal-body input::placeholder {
-            color: rgba(45, 55, 72, 0.5);
-        }
-
-        .theme-light .modal-btn.cancel {
-            background: rgba(45, 55, 72, 0.1);
-            color: rgba(45, 55, 72, 0.8);
-            border: 1px solid rgba(45, 55, 72, 0.2);
-        }
-
-        .theme-light .modal-btn.cancel:hover {
-            background: rgba(45, 55, 72, 0.2);
-        }
-
-        .theme-light .modal-btn.confirm {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-        }
-
-        .theme-light .modal-btn.confirm:hover {
-            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-        }
-        .focus-mode #controls,
-        .focus-mode #topBar {
-            opacity: 0.1;
-            transition: opacity 0.3s ease;
-        }
-
-        .focus-mode #controls:hover,
-        .focus-mode #topBar:hover {
-            opacity: 1;
-        }
-
-        .focus-mode .floating-panel {
-            transform: translateX(-50%) scale(0.9);
-            opacity: 0.3;
-            transition: all 0.3s ease;
-        }
-
-        .focus-mode .floating-panel:hover {
-            transform: translateX(-50%) scale(1);
-            opacity: 1;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .side-panel {
-                width: 100%;
-                right: -100%;
-            }
-            
-            #controls {
-                flex-direction: column;
-                gap: 10px;
-                padding: 10px;
-            }
-            
-            .floating-panel {
-                bottom: 20px;
-                padding: 8px;
-            }
-            
-            .control-btn {
-                width: 40px;
-                height: 40px;
-                font-size: 16px;
-            }
-            
-            .nav-btn-small {
-                width: 32px;
-                height: 32px;
-                font-size: 11px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
+<body>
 <!-- Top Bar -->
     <div id="topBar">
-        <div class="app-title">Read Racer v.01</div>
-        <div id="pdfTitle" style="color: rgba(255, 255, 255, 0.8); font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px;"></div>
-        <button id="menuToggle" class="menu-btn">☰</button>
-    </div>
-
-    <div id="controls">
-        <div class="control-group">
-            <label for="pdfFile" class="file-label">
-                <span class="upload-icon">📄</span>
-                <span class="upload-text">Upload PDF</span>
-                <input type="file" id="pdfFile" accept=".pdf">
-            </label>
-            
-            <div class="speed-control">
-                <label for="wpm">Speed</label>
-                <input type="number" id="wpm" value="300" min="50" max="1000" step="10">
-                <span class="unit">WPM</span>
-            </div>
-            
-            <div class="font-control">
-                <label for="fontSize">Size</label>
-                <input type="number" id="fontSize" value="48" min="12" max="120" step="2">
-                <span class="unit">px</span>
+        <div class="topbar-brand">
+            <div class="app-title">Read Racer v.01</div>
+            <button id="notesBtn" class="menu-btn notes-btn" aria-label="Open Read Racer notes" title="Open Read Racer notes">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M4 2.5H12C12.8284 2.5 13.5 3.17157 13.5 4V12C13.5 12.8284 12.8284 13.5 12 13.5H4C3.17157 13.5 2.5 12.8284 2.5 12V4C2.5 3.17157 3.17157 2.5 4 2.5Z" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M5 5.5H11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    <path d="M5 8H11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    <path d="M5 10.5H8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <button id="addBookmarkBtn" class="menu-btn bookmark-btn" aria-label="Add bookmark at current position" title="Add bookmark at current position">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M4 2.5H12C12.5523 2.5 13 2.94772 13 3.5V13L8 10.2L3 13V3.5C3 2.94772 3.44772 2.5 4 2.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M8 5V8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    <path d="M6.25 6.75H9.75" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <div id="pdfSearchShell" class="pdf-search-shell">
+                <button id="searchToggleBtn" class="menu-btn search-btn" aria-label="Search loaded content" title="Search loaded content">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.4"/>
+                        <path d="M10.5 10.5L13.5 13.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <div id="pdfSearchPanel" class="pdf-search-panel" aria-hidden="true">
+                    <input type="search" id="pdfSearchInput" class="pdf-search-input" placeholder="Search loaded content">
+                    <button id="pdfSearchPrevBtn" class="pdf-search-nav" aria-label="Previous match" title="Previous match">←</button>
+                    <span id="pdfSearchCount" class="pdf-search-count">0 / 0</span>
+                    <button id="pdfSearchNextBtn" class="pdf-search-nav" aria-label="Next match" title="Next match">→</button>
+                </div>
             </div>
         </div>
+        <div class="topbar-actions">
+            <button id="focusToggleBtn" class="header-quick-toggle" aria-label="Toggle focus mode" aria-pressed="false" title="Toggle focus mode">
+                <span class="header-quick-toggle-label">Focus</span>
+                <span class="toggle-switch header-quick-toggle-switch" aria-hidden="true"></span>
+            </button>
+            <button id="contextToggleBtn" class="header-quick-toggle" aria-label="Toggle context preview" aria-pressed="false" title="Toggle context preview">
+                <span class="header-quick-toggle-label">Context</span>
+                <span class="toggle-switch header-quick-toggle-switch" aria-hidden="true"></span>
+            </button>
+            <button id="themeToggle" class="menu-btn" aria-label="Toggle light mode" title="Toggle light mode">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 3.5C7.31 3.5 3.5 7.31 3.5 12S7.31 20.5 12 20.5C16.69 20.5 20.5 16.69 20.5 12S16.69 3.5 12 3.5Z" stroke="currentColor" stroke-width="1.7"/>
+                    <path d="M12 3.5V20.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <button id="menuToggle" class="menu-btn" aria-label="Open settings panel" title="Open settings panel">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M5 7H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M5 12H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M5 17H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
     </div>
+
+    <div id="wpmDock" class="wpm-dock" aria-label="Reading speed controls">
+        <button id="speedDownBtn" class="wpm-dock-edge" title="Decrease speed">−</button>
+        <button id="speedBtn" class="wpm-dock-display" title="Current reading speed">
+            <span id="speedBtnValue">180</span>
+            <span class="wpm-dock-unit">WPM</span>
+        </button>
+        <button id="speedUpBtn" class="wpm-dock-edge" title="Increase speed">+</button>
+    </div>
+
+    <input type="file" id="pdfFile" accept=".pdf" hidden>
+    <div id="pdfTitle"></div>
+
+    <div id="display">
+            <div id="contextPreview"></div>
+            <div id="wordDisplay"></div>
+            <div id="progressBar">
+                <div id="progressFill"></div>
+                <div id="lastReadTick" class="last-read-tick" aria-hidden="true"></div>
+                <div id="bookmarkTicks" class="bookmark-ticks"></div>
+                <div id="searchTicks" class="search-ticks"></div>
+                <div id="markerHovercard" class="marker-hovercard" aria-hidden="true"></div>
+            </div>
+        </div>
 
     <!-- Custom Modal -->
     <div id="customModal" class="modal">
@@ -1596,10 +100,10 @@
             </div>
             <div class="modal-body">
                 <p id="modalMessage">Message</p>
-                <input type="text" id="modalInput" style="display: none; width: 100%; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 12px; border-radius: 8px; margin-top: 10px; box-sizing: border-box;">
+                <input type="text" id="modalInput">
                 <div class="modal-actions">
-                    <button id="modalCancel" class="modal-btn cancel">Cancel</button>
                     <button id="modalConfirm" class="modal-btn confirm">Confirm</button>
+                    <button id="modalCancel" class="modal-btn cancel">Cancel</button>
                 </div>
             </div>
         </div>
@@ -1616,120 +120,230 @@
                 <label for="pdfNameInput">Enter a name for this PDF:</label>
                 <input type="text" id="pdfNameInput" placeholder="My Document" maxlength="100">
                 <div class="modal-actions">
-                    <button class="modal-btn cancel" onclick="closeNamingModal()">Cancel</button>
                     <button class="modal-btn confirm" onclick="confirmPdfName()">Save & Load</button>
+                    <button class="modal-btn cancel" onclick="closeNamingModal()">Cancel</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="display">
-            <div id="contextPreview"></div>
-            <div id="wordDisplay" onclick="document.getElementById('pdfFile').click()" style="cursor: pointer;">Upload a PDF to begin.</div>
-            <div id="progressBar">
-                <div id="progressFill"></div>
+    <div id="readmeModal" class="modal">
+        <div class="modal-content readme-modal-content">
+            <div class="modal-header">
+                <h3>About Read Racer</h3>
+                <button class="modal-close" onclick="closeReadmeModal()">×</button>
+            </div>
+            <div class="modal-body readme-modal-body">
+                <div id="readmeContent" class="markdown-content">Loading README...</div>
             </div>
         </div>
-    <div class="control-row">
-        <button id="back10Btn" class="nav-btn-small" disabled>←10</button>
-        <button id="back1Btn" class="nav-btn-small" disabled>←</button>
-        <button id="forward1Btn" class="nav-btn-small" disabled>→</button>
-        <button id="forward10Btn" class="nav-btn-small" disabled>10→</button>
+    </div>
+
+    <!-- Center Bottom Controls -->
+    <div class="center-controls">
+        <button id="back10Btn" class="nav-btn-small nav-btn-skip" disabled title="Go back 10 words">
+            <span class="nav-btn-skip-content"><span class="nav-btn-skip-arrow">←</span><span class="nav-btn-skip-value">10</span></span>
+        </button>
+        <button id="back1Btn" class="nav-btn-small" disabled title="Go back 1 word">←</button>
+        <button id="resetBtn" class="control-btn tertiary" disabled title="Reset to beginning">⏮</button>
+        <button id="playBtn" class="control-btn primary" disabled title="Start reading (Space)">▶</button>
+        <button id="pauseBtn" class="control-btn secondary" disabled title="Pause reading (Space)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <rect x="4" y="2" width="3" height="12"/>
+                <rect x="9" y="2" width="3" height="12"/>
+            </svg>
+        </button>
+        <button id="forward1Btn" class="nav-btn-small" disabled title="Go forward 1 word">→</button>
+        <button id="forward10Btn" class="nav-btn-small nav-btn-skip" disabled title="Go forward 10 words">
+            <span class="nav-btn-skip-content"><span class="nav-btn-skip-value">10</span><span class="nav-btn-skip-arrow">→</span></span>
+        </button>
     </div>
 
     <!-- Side Panel -->
     <div id="sidePanel" class="side-panel">
         <div class="panel-header">
-            <div class="tab-header">
+            <div class="panel-title-row">
                 <h2>Read Racer</h2>
-                <button id="closeSidePanel" class="close-btn">×</button>
+                <button id="closeSidePanel" class="panel-close-btn">×</button>
             </div>
         </div>
         
         <div class="tabs">
-            <button class="tab-btn active" data-tab="library">📚 Library</button>
-            <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
+            <button class="tab-btn active" data-tab="settings">⚙️ Settings</button>
+            <button class="tab-btn" data-tab="library">📚 Library</button>
             <button class="tab-btn" data-tab="stats">📊 Stats</button>
         </div>
         
         <div class="panel-content">
             <!-- Library Tab -->
-            <div id="libraryTab" class="tab-content active">
+            <div id="libraryTab" class="tab-content">
                 <div class="tab-header">
                     <h3>My Library</h3>
                     <div class="tab-actions">
                         <label for="libraryPdfFile" class="upload-btn-small">📄 Upload PDF</label>
-                        <input type="file" id="libraryPdfFile" accept=".pdf" style="display: none;">
+                        <input type="file" id="libraryPdfFile" accept=".pdf" hidden>
                     </div>
+                </div>
+                <div class="library-search-row">
+                    <input type="search" id="librarySearch" class="library-search-input" placeholder="Search titles" aria-label="Search library titles">
                 </div>
                 <div id="libraryList" class="library-list"></div>
             </div>
                 
                 <!-- Settings Tab -->
-                <div id="settingsTab" class="tab-content">
+                <div id="settingsTab" class="tab-content active">
                     <div class="settings-grid">
                         <div class="setting-group">
-                            <h4>Reading Experience</h4>
-                            <div class="setting-item">
-                                <label>Smooth Transitions</label>
-                                <div class="toggle-switch" id="smoothTransitions" onclick="toggleSetting('smoothTransitions')"></div>
+                            <h4>Reading Controls</h4>
+                            <div class="reading-control-row">
+                                <label class="reading-control-label" for="wpm">Speed (WPM)</label>
+                                <div class="reading-control-cluster">
+                                    <button type="button" class="stepper-btn" id="wpmDown" aria-label="Decrease speed">−</button>
+                                    <input class="reading-control-input" type="number" id="wpm" value="180" min="50" max="1000" step="10">
+                                    <button type="button" class="stepper-btn" id="wpmUp" aria-label="Increase speed">+</button>
+                                </div>
                             </div>
-                            <div class="setting-item">
-                                <label>Word Length Compensation</label>
-                                <div class="toggle-switch" id="wordLengthComp" onclick="toggleSetting('wordLengthComp')"></div>
-                            </div>
-                            <div class="setting-item">
-                                <label>Show Context Preview</label>
-                                <div class="toggle-switch" id="contextPreviewToggle" onclick="toggleSetting('contextPreviewToggle')"></div>
-                            </div>
-                            <div class="setting-item">
-                                <label>Visual Pulse</label>
-                                <div class="toggle-switch" id="visualPulse" onclick="toggleSetting('visualPulse')"></div>
+                            <div class="reading-control-row">
+                                <label class="reading-control-label" for="fontSize">Font Size</label>
+                                <div class="reading-control-cluster">
+                                    <button type="button" class="stepper-btn" id="fontSizeDown" aria-label="Decrease font size">−</button>
+                                    <input class="reading-control-input" type="number" id="fontSize" value="32" min="12" max="120" step="1">
+                                    <button type="button" class="stepper-btn" id="fontSizeUp" aria-label="Increase font size">+</button>
+                                </div>
                             </div>
                         </div>
                         
                         <div class="setting-group">
                             <h4>Visual Settings</h4>
                             <div class="setting-item">
-                                <label>Theme</label>
-                                <select id="themeSelect" onchange="changeTheme(this.value)">
-                                    <option value="dark">🌙 Dark</option>
-                                    <option value="light">☀️ Light</option>
-                                </select>
-                            </div>
-                            <div class="setting-item">
                                 <label>Center Color</label>
-                                <select id="centerColor" onchange="updateCenterColor(this.value)">
-                                    <option value="#FF0000">🔴 Red</option>
-                                    <option value="#00FF00">🟢 Green</option>
-                                    <option value="#0080FF">🔵 Blue</option>
-                                    <option value="#FFFF00">🟡 Yellow</option>
-                                    <option value="#swatch">🎨 Custom</option>
-                                </select>
+                                <div class="setting-control">
+                                    <div class="setting-field setting-field-wide">
+                                        <div class="color-swatch-grid" id="centerColorSwatches">
+                                            <button type="button" class="color-swatch" data-color="#FF0000" aria-label="Red"></button>
+                                            <button type="button" class="color-swatch" data-color="#00FF88" aria-label="Mint"></button>
+                                            <button type="button" class="color-swatch" data-color="#4DA3FF" aria-label="Blue"></button>
+                                            <button type="button" class="color-swatch" data-color="#FFD84D" aria-label="Gold"></button>
+                                            <button type="button" class="color-swatch color-swatch-custom" id="customColorTrigger" aria-label="Custom color">
+                                                +
+                                                <input type="color" id="customCenterColor" class="custom-color-input" aria-label="Choose custom center color">
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="setting-item">
                                 <label>Font Family</label>
-                                <select id="fontFamily" onchange="changeFont(this.value)">
-                                    <option value="'Courier New', monospace">Courier</option>
-                                    <option value="'Monaco', monospace">Monaco</option>
-                                    <option value="'Consolas', monospace">Consolas</option>
-                                </select>
+                                <div class="setting-control">
+                                    <div class="setting-field">
+                                        <div class="font-picker" id="fontPicker">
+                                            <button type="button" id="fontFamilyTrigger" class="font-picker-trigger" aria-haspopup="listbox" aria-expanded="false">
+                                                <span id="fontFamilyTriggerLabel">Courier</span>
+                                            </button>
+                                            <div id="fontFamilyMenu" class="font-picker-menu" role="listbox" aria-label="Font family">
+                                                <button type="button" class="font-picker-option" data-value="Georgia, serif" style="font-family: Georgia, serif;">Georgia</button>
+                                                <button type="button" class="font-picker-option" data-value="'Palatino Linotype', 'Book Antiqua', Palatino, serif" style="font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;">Palatino</button>
+                                                <button type="button" class="font-picker-option" data-value="'Baskerville', 'Times New Roman', serif" style="font-family: 'Baskerville', 'Times New Roman', serif;">Baskerville</button>
+                                                <button type="button" class="font-picker-option" data-value="'Times New Roman', Times, serif" style="font-family: 'Times New Roman', Times, serif;">Times</button>
+                                                <button type="button" class="font-picker-option" data-value="'Verdana', Geneva, sans-serif" style="font-family: 'Verdana', Geneva, sans-serif;">Verdana</button>
+                                                <button type="button" class="font-picker-option" data-value="'Trebuchet MS', sans-serif" style="font-family: 'Trebuchet MS', sans-serif;">Trebuchet</button>
+                                                <button type="button" class="font-picker-option" data-value="'Helvetica Neue', Helvetica, Arial, sans-serif" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">Helvetica</button>
+                                                <button type="button" class="font-picker-option" data-value="Arial, sans-serif" style="font-family: Arial, sans-serif;">Arial</button>
+                                                <button type="button" class="font-picker-option" data-value="'Monaco', monospace" style="font-family: 'Monaco', monospace;">Monaco</button>
+                                                <button type="button" class="font-picker-option" data-value="'Consolas', monospace" style="font-family: 'Consolas', monospace;">Consolas</button>
+                                                <button type="button" class="font-picker-option" data-value="'Courier New', monospace" style="font-family: 'Courier New', monospace;">Courier</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h4>Reading Experience</h4>
+                            <div class="setting-item">
+                                <label>Visual Pulse</label>
+                                <div class="setting-control compact">
+                                    <div class="toggle-switch" id="visualPulse" onclick="toggleSetting('visualPulse')"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <label>Show Context Preview</label>
+                                <div class="setting-control compact">
+                                    <div class="toggle-switch" id="contextPreviewToggle" onclick="toggleSetting('contextPreviewToggle')"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <label>Minimal Punctuation</label>
+                                <div class="setting-control compact">
+                                    <div class="toggle-switch" id="minimalPunctuation" onclick="toggleSetting('minimalPunctuation')"></div>
+                                </div>
                             </div>
                         </div>
                         
                         <div class="setting-group">
                             <h4>Behavior</h4>
                             <div class="setting-item">
-                                <label>Focus Mode</label>
-                                <div class="toggle-switch" id="focusMode" onclick="toggleSetting('focusMode')"></div>
-                            </div>
-                            <div class="setting-item">
-                                <label>Click to Pause</label>
-                                <div class="toggle-switch" id="clickToPause" onclick="toggleSetting('clickToPause')"></div>
+                                <label>Show Title</label>
+                                <div class="setting-control compact">
+                                    <div class="toggle-switch active" id="showTitle" onclick="toggleSetting('showTitle')"></div>
+                                </div>
                             </div>
                             <div class="setting-item">
                                 <label>Show Progress Bar</label>
-                                <div class="toggle-switch active" id="showProgressBar" onclick="toggleSetting('showProgressBar')"></div>
+                                <div class="setting-control compact">
+                                    <div class="toggle-switch active" id="showProgressBar" onclick="toggleSetting('showProgressBar')"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <label>Click to Pause</label>
+                                <div class="setting-control compact">
+                                    <div class="toggle-switch" id="clickToPause" onclick="toggleSetting('clickToPause')"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <label>Focus Mode</label>
+                                <div class="setting-control compact">
+                                    <div class="toggle-switch" id="focusMode" onclick="toggleSetting('focusMode')"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h4>Bookmarks</h4>
+                            <div class="bookmarks-toolbar">
+                                <button type="button" id="addBookmarkPanelBtn" class="data-management-btn">Add Current</button>
+                            </div>
+                            <div id="bookmarkList" class="bookmark-list">
+                                <p class="bookmark-empty">Load a PDF to use bookmarks.</p>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h4>Data Management</h4>
+                            <div class="setting-item data-management-item">
+                                <label>Local Storage</label>
+                                <div class="setting-control">
+                                    <span id="localStorageUsage" class="data-management-value">0 B</span>
+                                </div>
+                            </div>
+                            <div class="setting-item data-management-item">
+                                <label>IndexedDB</label>
+                                <div class="setting-control">
+                                    <span id="indexedDbUsage" class="data-management-value">0 B</span>
+                                </div>
+                            </div>
+                            <div class="setting-item data-management-item">
+                                <label>Files</label>
+                                <div class="setting-control">
+                                    <span id="libraryFileCount" class="data-management-value">0</span>
+                                </div>
+                            </div>
+                            <div class="setting-item data-management-item data-management-actions">
+                                <label>Purge Data</label>
+                                <div class="setting-control">
+                                    <button type="button" id="purgeDataBtn" class="data-management-btn">Purge All</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1744,11 +358,7 @@
                         </div>
                         <div class="stat-card">
                             <div class="stat-number" id="sessionTimeStat">0m</div>
-                            <div class="stat-label">Session Time</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="currentStreakStat">0</div>
-                            <div class="stat-label">Current Streak</div>
+                            <div class="stat-label">Reading Time</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-number" id="currentWPMStat">300</div>

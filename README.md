@@ -1,143 +1,157 @@
-# Read Racer - Speed Reading Application
+# Read Racer
 
-A modern, feature-rich speed reading application that helps you read PDFs faster using advanced display techniques and a beautiful, intuitive interface.
+Read Racer is a browser-based PDF reader built for focused, high-speed reading.
 
-## ✨ Features
+## What It Does
 
-### 🎯 Core Reading Experience
-- **Speed Reading Display**: Optimized word-by-word display with adjustable WPM (Words Per Minute)
-- **Context Preview**: Shows surrounding words for better comprehension
-- **Smooth Transitions**: Customizable animations for comfortable reading
-- **Reading Progress Tracking**: Visual progress bar and percentage tracking
-- **Keyboard Navigation**: Full keyboard support for hands-free operation
+Instead of asking the eye to travel line by line across a page, Read Racer presents one anchored word at a time in the center of the screen. The goal is to reduce unnecessary eye motion, keep attention fixed, and make it easier to move through dense material without losing your place.
 
-### 📚 PDF Library Management
-- **IndexedDB Storage**: Persistent offline storage for all your PDFs
-- **Auto-Save Workflow**: PDFs are automatically saved with custom names
-- **Smart Title Cleaning**: Replaces underscores with spaces for readable titles
-- **Progress Tracking**: Remembers your reading position in each PDF
-- **Quick Actions**: Rename, delete, and load PDFs with one click
-- **Beautiful Card Layout**: Modern glassmorphism design with hover effects
+It is designed for people who want a cleaner, more controlled reading mode for long PDFs, study material, reference documents, and other text-heavy reading where flow, pace, and focus matter.
 
-### 🎨 Design & UI
-- **Glassmorphism Theme**: Modern frosted glass effects throughout
-- **Dark/Light Modes**: Full theme support with smooth transitions
-- **Responsive Design**: Works perfectly on all screen sizes
-- **Custom Modal System**: No browser alerts - beautiful custom dialogs
-- **Micro-interactions**: Smooth hover effects and transitions
-- **Professional Typography**: Optimized fonts for extended reading
+## What Read Racer Is Trying To Do
 
-### ⚙️ Customization
-- **Reading Speed**: Adjustable WPM from 100-1000 words per minute
-- **Font Size**: Customizable text size from 12px to 120px
-- **Word Delay**: Extra time for longer words
-- **Center Color**: Choose highlight colors for focused reading
-- **Theme Selection**: Switch between dark and light themes
-- **Settings Persistence**: All preferences are automatically saved
+Read Racer is not trying to replace deep reading with gimmicks. The point is to give the reader:
 
-## 🚀 Getting Started
+- a stable focal point
+- control over reading speed
+- less page clutter competing for attention
+- quick recovery when resuming a document later
+- a way to move through PDFs without fighting typical PDF layout problems
 
-### Installation
-1. Clone or download the repository
-2. Open `index.html` in your modern web browser
-3. No additional setup required - everything works offline!
+The app keeps processing local in the browser, stores PDFs on-device, and remembers your per-document progress so you can stop and come back to the exact word you were on.
 
-### Basic Usage
-1. **Upload a PDF**: Click "Upload PDF" or click the center text
-2. **Name Your PDF**: Enter a custom name in the modal (auto-cleans filenames)
-3. **Start Reading**: Adjust your WPM and click Start or press Space
-4. **Navigate**: Use arrow buttons or keyboard shortcuts
-5. **Track Progress**: Your reading position is automatically saved
+## Current Features
 
-## 🎮 Controls
+### Reader
+- Word-by-word playback with adjustable `WPM`
+- Adjustable reader font size and font family
+- Configurable anchor-letter color
+- Optional visual pulse on the active word
+- Optional inline context preview: previous words dimmed before the active word, next words dimmed after it
+- Clickable and draggable progress bar
+- Thin progress markers for search hits
+- Persistent furthest-read marker on the progress bar
+- Manual bookmarks with labels and persistent progress-bar markers
+- Toggleable title display
+- Toggleable progress bar and progress text
+- Optional click-to-pause behavior on the reader surface
+- Focus mode for reducing panel/control noise while reading
+- In-document search with result navigation and phrase-aware preview
 
-### Keyboard Shortcuts
-- **Space**: Start/Pause reading
-- **←/→**: Navigate words (when paused)
-- **Shift + ←/→**: Navigate 10 words
-- **Escape**: Close side panel
+### Library
+- PDF upload from the Library tab
+- Local IndexedDB storage
+- Per-PDF progress persistence
+- Resume from the exact last word index
+- Rename PDFs from the library card title
+- Delete PDFs with confirmation
 
-### Navigation Buttons
-- **Start**: Begin speed reading from current position
-- **Pause**: Temporarily stop reading
-- **Reset**: Return to beginning
-- **←10/←/→/→10**: Navigate by words
+### Stats
+- Total words read
+- Active reading time only while playback is running
+- Current WPM display
 
-## 📱 Interface
+### Data Management
+- Estimated `localStorage` usage
+- Estimated IndexedDB usage
+- Stored file count
+- Full purge flow with confirmation
 
-### Main Display
-- **Center Text**: Current word being displayed
-- **Context Preview**: Surrounding words for context
-- **Progress Bar**: Visual reading progress
-- **PDF Title**: Current document name (top center)
+## How It Works
 
-### Side Panel
-- **📚 Library Tab**: Manage your PDF collection
-- **⚙️ Settings Tab**: Customize reading experience
-- **📊 Stats Tab**: View reading statistics
+1. Open the app in a modern browser.
+2. Open the side panel and upload a PDF from the Library tab.
+3. Name the PDF when prompted.
+4. Adjust reading settings in the Settings tab.
+5. Press `Play` to start.
 
-### Library Features
-- **Click to Load**: Click any card to start reading
-- **Hover Effects**: Beautiful elevation and shadows
-- **Quick Actions**: Rename and delete buttons
-- **Progress Indicators**: See reading completion percentage
-- **Metadata Display**: Word count, dates, and progress
+## Controls
 
-## 🛠️ Technical Features
+### Reader Controls
+- `Play / Pause`: primary center button
+- `Reset`: jump back to the beginning
+- `←` / `→`: move by one word
+- `←10` / `10→`: move by ten words
+- Search results: `↑` / `↓` step through matches when a search is active
+- Header bookmark button: save a bookmark at the current word
+- Click the PDF title to open the current PDF in a new browser tab
 
-### Performance
-- **PDF.js Integration**: Robust PDF parsing and text extraction
-- **IndexedDB Storage**: Efficient client-side database
-- **Optimized Rendering**: Smooth 60fps animations
-- **Memory Management**: Efficient handling of large PDFs
+### Keyboard
+- `Space`: play / pause
+- `Escape`: close the side panel
 
-### Security & Privacy
-- **100% Offline**: No data sent to external servers
-- **Local Storage**: Everything stored in your browser
-- **No Tracking**: Completely private reading experience
-- **Open Source**: Fully transparent and auditable code
+### Progress
+- Click the progress bar to seek
+- Drag the progress bar to scrub through the document
+- Search matches appear as vertical ticks on the progress bar
+- The furthest point reached remains marked even if you jump backward temporarily
 
-### Browser Compatibility
-- **Modern Browsers**: Chrome, Firefox, Safari, Edge
-- **Mobile Support**: Responsive design for phones/tablets
-- **Progressive Enhancement**: Works without JavaScript enabled (basic mode)
+## Persistence
 
-## 🎯 Advanced Features
+The app persists:
+- reader settings in `localStorage`
+- reading stats in `localStorage`
+- PDFs and per-PDF reading position in IndexedDB
+- active in-document search for the currently loaded PDF across reloads
 
-### Reading Optimization
-- **Word Length Compensation**: Longer words get more display time
-- **Subconscious Processing**: Optimized display timing
-- **Comprehension Mode**: Balance between speed and understanding
-- **Fatigue Reduction**: Regular pause recommendations
+Per-PDF saved state includes:
+- title
+- word count
+- reading progress percentage
+- last read date
+- exact last word index
+- furthest position reached marker
+- manual bookmarks and bookmark labels
 
-### Library Management
-- **Smart Search**: Quick PDF finding (coming soon)
-- **Collections**: Organize PDFs by category (coming soon)
-- **Export/Import**: Backup your library (coming soon)
-- **Reading Statistics**: Track speed and progress over time
+## Why This Can Help
 
-## 🤝 Contributing
+Read Racer can help when:
 
-This is an open-source project! Contributions are welcome:
-- Bug reports and feature requests
-- Code improvements and optimizations
-- UI/UX enhancements
-- Documentation improvements
+- a reader loses place easily while scanning long lines
+- the visual density of a full PDF page is distracting
+- reading speed drops because of regressions and eye travel
+- someone wants a controlled pace for study, review, or repeated reading
+- a reader wants to resume exactly where they left off later
 
-## 📄 License
+It can be especially useful for dense nonfiction, notes, technical documents, and study material where the reader wants more control over pace and focus than a normal PDF viewer provides.
 
-MIT License - feel free to use, modify, and distribute.
+## Reading Rationale
 
-## 🔮 Future Updates
+The basic idea behind Read Racer is simple:
 
-- [ ] Text-to-speech integration
-- [ ] Reading comprehension quizzes
-- [ ] Multi-language support
-- [ ] Cloud sync (optional)
-- [ ] Advanced statistics dashboard
-- [ ] Reading goals and achievements
-- [ ] Social reading features
+- keep the visual target stable
+- reduce unnecessary eye travel across the line
+- lower the amount of competing page clutter on screen
+- let the reader control pace directly
 
----
+That does not magically create comprehension, and it is not a substitute for attention, background knowledge, or rereading when material is difficult. But it can help create better reading conditions for some people.
 
-**Read Racer** - Transform your reading experience with modern speed reading technology. 🚀📚
+There are a few practical reasons this can work:
+
+- **Less saccadic movement:** normal page reading requires the eyes to make repeated jumps across the line and back to the next line. A centered presentation reduces that movement demand.
+- **Stable fixation point:** the anchored center word gives the eyes a consistent place to land, which can make pacing feel easier and reduce visual drift.
+- **Controlled pacing:** adjusting `WPM` lets the reader find a speed that is challenging without immediately becoming chaos.
+- **Lower visual clutter:** showing only the active word, with optional dimmed context, removes most of the irrelevant page layout noise that often comes with PDFs.
+- **Reduced place loss:** because the app remembers the exact word position, it is easier to resume without spending time re-finding the spot.
+
+In other words, Read Racer is meant to help the reader become a **more focused** reader first. For some readers, once that focus becomes easier to maintain, higher reading speeds become more realistic and sustainable.
+
+The right way to think about it is:
+
+- better visual stability can support better focus
+- better focus can support better pacing
+- better pacing can support faster reading
+
+But comprehension still matters more than raw speed. If the text stops making sense, the answer is usually to slow down, not force the speed upward.
+
+## Current Notes
+
+- PDFs are flattened into words plus page-number mapping during parse.
+- The app does not currently build semantic chapter or section structure from PDFs.
+- All processing is local to the browser.
+
+## Project Files
+
+- `index.html`: app structure
+- `styles.css`: app styles
+- `script.js`: reader logic, persistence, PDF parsing, and UI behavior
