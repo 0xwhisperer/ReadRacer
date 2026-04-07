@@ -47,6 +47,7 @@ class PDFWordReader {
             breakReminders: false,
             highContrast: false,
             largeTouchTargets: false,
+            ambientStarfield: true,
             // Main controls
             wpm: 180,
             fontSize: 32,
@@ -132,6 +133,7 @@ class PDFWordReader {
         this.pdfSearchCount = document.getElementById('pdfSearchCount');
         this.contextToggleBtn = document.getElementById('contextToggleBtn');
         this.focusToggleBtn = document.getElementById('focusToggleBtn');
+        this.starfieldToggleBtn = document.getElementById('starfieldToggleBtn');
         this.menuToggle = document.getElementById('menuToggle');
         this.sidePanel = document.getElementById('sidePanel');
         this.closeSidePanelBtn = document.getElementById('closeSidePanel');
@@ -161,6 +163,9 @@ class PDFWordReader {
         this.namingModal = document.getElementById('namingModal');
         this.pdfNameInput = document.getElementById('pdfNameInput');
         this.readmeModal = document.getElementById('readmeModal');
+        this.starfieldCanvas = document.getElementById('starfieldCanvas');
+        this._starfieldAnimId = null;
+        this._starfieldStars = [];
         this.readmeContent = document.getElementById('readmeContent');
         
         // Temporary storage for uploaded PDF before naming
@@ -353,6 +358,9 @@ class PDFWordReader {
         }
         if (this.focusToggleBtn) {
             this.focusToggleBtn.addEventListener('click', () => this.toggleQuickSetting('focusMode'));
+        }
+        if (this.starfieldToggleBtn) {
+            this.starfieldToggleBtn.addEventListener('click', () => this.toggleQuickSetting('ambientStarfield'));
         }
         if (this.closeSidePanelBtn) {
             this.closeSidePanelBtn.addEventListener('click', () => this.closeSidePanel());
@@ -946,7 +954,7 @@ class PDFWordReader {
                 modal.classList.remove('show');
                 modalConfirm.removeEventListener('click', handleConfirm);
                 modalCancel.removeEventListener('click', handleCancel);
-                modalInput.removeEventListener('keypress', handleKeyPress);
+                modalInput.removeEventListener('keydown', handleKeyPress);
                 resolve(showInput ? modalInput.value.trim() : true);
             };
             
@@ -954,7 +962,7 @@ class PDFWordReader {
                 modal.classList.remove('show');
                 modalConfirm.removeEventListener('click', handleConfirm);
                 modalCancel.removeEventListener('click', handleCancel);
-                modalInput.removeEventListener('keypress', handleKeyPress);
+                modalInput.removeEventListener('keydown', handleKeyPress);
                 resolve(null);
             };
             
@@ -968,7 +976,7 @@ class PDFWordReader {
             
             modalConfirm.addEventListener('click', handleConfirm);
             modalCancel.addEventListener('click', handleCancel);
-            modalInput.addEventListener('keypress', handleKeyPress);
+            modalInput.addEventListener('keydown', handleKeyPress);
         });
     }
 
@@ -1951,6 +1959,7 @@ class PDFWordReader {
 
         syncButton(this.contextToggleBtn, 'contextPreviewToggle', 'Toggle context preview');
         syncButton(this.focusToggleBtn, 'focusMode', 'Toggle focus mode');
+        syncButton(this.starfieldToggleBtn, 'ambientStarfield', 'Toggle starfield');
     }
 
     adjustNumberSetting(setting, delta) {
@@ -2551,7 +2560,7 @@ class PDFWordReader {
                 <div class="library-item-header">
                     <div class="library-item-title-row">
                         <button class="library-item-title-button" onclick="event.stopPropagation(); renameFromLibrary(${pdf.id})">
-                            <span class="library-item-title">${pdf.name}</span>
+                            <span class="library-item-title">${this.escapeHtml(pdf.name)}</span>
                         </button>
                         <button class="library-delete-btn" aria-label="Delete PDF" onclick="event.stopPropagation(); deleteFromLibrary(${pdf.id})">×</button>
                     </div>
@@ -2967,6 +2976,7 @@ class PDFWordReader {
         this.syncQuickToggleButtons();
 
         this.syncFocusMode();
+        this.syncStarfield();
         this.syncReaderChromeVisibility();
         this.refreshCurrentDisplay();
     }
@@ -2990,6 +3000,130 @@ class PDFWordReader {
     syncFocusMode() {
         const shouldEnable = this.settings.focusMode;
         document.body.classList.toggle('focus-mode-active', shouldEnable);
+    }
+
+    syncStarfield() {
+        if (this.settings.ambientStarfield) {
+            this.startStarfield();
+        } else {
+            this.stopStarfield();
+        }
+    }
+
+    startStarfield() {
+        const canvas = this.starfieldCanvas;
+        if (!canvas) return;
+        if (this._starfieldAnimId) return;
+
+        const ctx = canvas.getContext('2d');
+        const isLight = () => this.settings.theme === 'light';
+        const stars = this._starfieldStars;
+        const STAR_COUNT = 200;
+
+        const resize = () => {
+            canvas.width = canvas.offsetWidth * (window.devicePixelRatio || 1);
+            canvas.height = canvas.offsetHeight * (window.devicePixelRatio || 1);
+        };
+        resize();
+        this._starfieldResizeHandler = resize;
+        window.addEventListener('resize', this._starfieldResizeHandler);
+
+        const resetStar = (s, scatter) => {
+            const angle = Math.random() * Math.PI * 2;
+            const startDist = scatter ? Math.random() * 0.5 : 0.001 + Math.random() * 0.03;
+            s.x = Math.cos(angle) * startDist;
+            s.y = Math.sin(angle) * startDist;
+            s.z = scatter ? Math.random() : 0;
+            s.speed = 0.0008 + Math.random() * 0.0015;
+            s.prevX = s.x;
+            s.prevY = s.y;
+        };
+
+        if (stars.length === 0) {
+            for (let i = 0; i < STAR_COUNT; i++) {
+                const s = { x: 0, y: 0, z: 0, speed: 0, prevX: 0, prevY: 0 };
+                resetStar(s, true);
+                stars.push(s);
+            }
+        }
+
+        canvas.classList.add('active');
+        this.display.classList.add('starfield-active');
+
+        const draw = () => {
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+            const maxR = Math.sqrt(cx * cx + cy * cy);
+            const light = isLight();
+
+            ctx.fillStyle = light ? 'rgba(245, 247, 250, 0.15)' : 'rgba(11, 15, 24, 0.15)';
+            ctx.fillRect(0, 0, w, h);
+
+            for (const star of stars) {
+                star.prevX = star.x;
+                star.prevY = star.y;
+
+                const dist = Math.sqrt(star.x * star.x + star.y * star.y);
+                const accel = 1 + dist * 8;
+                const angle = Math.atan2(star.y, star.x);
+                star.x += Math.cos(angle) * star.speed * accel;
+                star.y += Math.sin(angle) * star.speed * accel;
+                star.z = Math.min(1, star.z + 0.004);
+
+                const px = cx + star.x * maxR;
+                const py = cy + star.y * maxR;
+
+                if (px < -20 || px > w + 20 || py < -20 || py > h + 20) {
+                    resetStar(star, false);
+                    continue;
+                }
+
+                const normDist = dist / 0.7;
+                const alpha = Math.min(1, normDist * normDist) * (0.5 + star.z * 0.5);
+                const sz = 0.5 + normDist * 2.5;
+
+                const ppx = cx + star.prevX * maxR;
+                const ppy = cy + star.prevY * maxR;
+
+                if (light) {
+                    ctx.strokeStyle = `hsla(225, 50%, 50%, ${alpha * 0.45})`;
+                } else {
+                    const hue = 210 + star.z * 30;
+                    ctx.strokeStyle = `hsla(${hue}, 60%, 80%, ${alpha * 0.8})`;
+                }
+                ctx.lineWidth = sz;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(ppx, ppy);
+                ctx.lineTo(px, py);
+                ctx.stroke();
+            }
+
+            this._starfieldAnimId = requestAnimationFrame(draw);
+        };
+
+        this._starfieldAnimId = requestAnimationFrame(draw);
+    }
+
+    stopStarfield() {
+        if (this._starfieldAnimId) {
+            cancelAnimationFrame(this._starfieldAnimId);
+            this._starfieldAnimId = null;
+        }
+        if (this._starfieldResizeHandler) {
+            window.removeEventListener('resize', this._starfieldResizeHandler);
+            this._starfieldResizeHandler = null;
+        }
+        if (this.starfieldCanvas) {
+            this.starfieldCanvas.classList.remove('active');
+            const ctx = this.starfieldCanvas.getContext('2d');
+            ctx.clearRect(0, 0, this.starfieldCanvas.width, this.starfieldCanvas.height);
+        }
+        if (this.display) {
+            this.display.classList.remove('starfield-active');
+        }
     }
 
     switchTab(tabName) {
@@ -3459,6 +3593,11 @@ function closeReadmeModal() {
 }
 
 function closeCustomModal() {
+    const modalCancel = document.getElementById('modalCancel');
+    if (modalCancel) {
+        modalCancel.click();
+        return;
+    }
     const modal = document.getElementById('customModal');
     modal.classList.remove('show');
 }

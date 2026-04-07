@@ -43,6 +43,10 @@
             </div>
         </div>
         <div class="topbar-actions">
+            <button id="starfieldToggleBtn" class="header-quick-toggle" aria-label="Toggle starfield" aria-pressed="false" title="Toggle starfield">
+                <span class="header-quick-toggle-label">Starfield</span>
+                <span class="toggle-switch header-quick-toggle-switch" aria-hidden="true"></span>
+            </button>
             <button id="focusToggleBtn" class="header-quick-toggle" aria-label="Toggle focus mode" aria-pressed="false" title="Toggle focus mode">
                 <span class="header-quick-toggle-label">Focus</span>
                 <span class="toggle-switch header-quick-toggle-switch" aria-hidden="true"></span>
@@ -80,6 +84,7 @@
     <div id="pdfTitle"></div>
 
     <div id="display">
+            <canvas id="starfieldCanvas"></canvas>
             <div id="contextPreview"></div>
             <div id="wordDisplay"></div>
             <div id="progressBar">
@@ -277,6 +282,12 @@
                                 <label>Minimal Punctuation</label>
                                 <div class="setting-control compact">
                                     <div class="toggle-switch" id="minimalPunctuation" onclick="toggleSetting('minimalPunctuation')"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <label>Ambient Starfield</label>
+                                <div class="setting-control compact">
+                                    <div class="toggle-switch" id="ambientStarfield" onclick="toggleSetting('ambientStarfield')"></div>
                                 </div>
                             </div>
                         </div>
