@@ -1558,33 +1558,24 @@
             </div>
         </div>
         
-        <!-- Side Panel -->
-        <div id="sidePanel" class="side-panel">
-            <div class="panel-header">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="library">📚 Library</button>
+            <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
+            <button class="tab-btn" data-tab="stats">📊 Stats</button>
+        </div>
+        
+        <div class="panel-content">
+            <!-- Library Tab -->
+            <div id="libraryTab" class="tab-content active">
                 <div class="tab-header">
-                    <h2>Read Racer</h2>
-                    <button id="closeSidePanel" class="close-btn">×</button>
-                </div>
-            </div>
-            
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="library">📚 Library</button>
-                <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
-                <button class="tab-btn" data-tab="stats">📊 Stats</button>
-            </div>
-            
-            <div class="panel-content">
-                <!-- Library Tab -->
-                <div id="libraryTab" class="tab-content active">
-                    <div class="tab-header">
-                        <h3>My Library</h3>
-                        <div class="tab-actions">
-                            <label for="libraryPdfFile" class="upload-btn-small">📄 Upload PDF</label>
-                            <input type="file" id="libraryPdfFile" accept=".pdf" style="display: none;">
-                        </div>
+                    <h3>My Library</h3>
+                    <div class="tab-actions">
+                        <label for="libraryPdfFile" class="upload-btn-small">📄 Upload PDF</label>
+                        <input type="file" id="libraryPdfFile" accept=".pdf" style="display: none;">
                     </div>
-                    <div id="libraryList" class="library-list"></div>
                 </div>
+                <div id="libraryList" class="library-list"></div>
+            </div>
                 
                 <!-- Settings Tab -->
                 <div id="settingsTab" class="tab-content">
