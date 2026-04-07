@@ -303,8 +303,9 @@ class PDFWordReader {
 
     showNamingModal() {
         if (this.namingModal) {
-            // Set default name (remove .pdf extension)
-            const defaultName = this.tempPDFName.replace(/\.pdf$/i, '');
+            // Set default name (remove .pdf extension and replace underscores with spaces)
+            let defaultName = this.tempPDFName.replace(/\.pdf$/i, '');
+            defaultName = defaultName.replace(/_/g, ' ');
             this.pdfNameInput.value = defaultName;
             this.pdfNameInput.focus();
             this.pdfNameInput.select();
@@ -389,7 +390,9 @@ class PDFWordReader {
 
     showPDFTitle(title) {
         if (this.currentPDFTitle) {
-            this.currentPDFTitle.textContent = title;
+            // Clean up title by replacing underscores with spaces
+            const cleanTitle = title.replace(/_/g, ' ');
+            this.currentPDFTitle.textContent = cleanTitle;
         }
     }
 
