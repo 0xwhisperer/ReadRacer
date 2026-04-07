@@ -1192,19 +1192,30 @@ class PDFWordReader {
 
 // Initialize the application when the page loads
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Initializing PDF Reader...');
     window.pdfReader = new PDFWordReader();
+    console.log('PDF Reader initialized:', window.pdfReader);
+    console.log('closeSidePanel method exists:', typeof window.pdfReader.closeSidePanel);
     
-    // Add click-outside listener after class is fully initialized
-    document.addEventListener('click', (e) => {
-        if (window.pdfReader.sidePanel && window.pdfReader.sidePanel.classList.contains('open')) {
-            const isClickInsidePanel = window.pdfReader.sidePanel.contains(e.target);
-            const isClickOnMenuToggle = window.pdfReader.menuToggle && window.pdfReader.menuToggle.contains(e.target);
-            
-            if (!isClickInsidePanel && !isClickOnMenuToggle) {
-                window.pdfReader.closeSidePanel();
+    // Add click-outside listener after a short delay to ensure everything is initialized
+    setTimeout(() => {
+        console.log('Adding click-outside listener...');
+        document.addEventListener('click', (e) => {
+            if (window.pdfReader && window.pdfReader.sidePanel && 
+                window.pdfReader.sidePanel.classList.contains('open') &&
+                typeof window.pdfReader.closeSidePanel === 'function') {
+                
+                const isClickInsidePanel = window.pdfReader.sidePanel.contains(e.target);
+                const isClickOnMenuToggle = window.pdfReader.menuToggle && window.pdfReader.menuToggle.contains(e.target);
+                
+                if (!isClickInsidePanel && !isClickOnMenuToggle) {
+                    console.log('Closing side panel due to outside click...');
+                    window.pdfReader.closeSidePanel();
+                }
             }
-        }
-    });
+        });
+        console.log('Click-outside listener added');
+    }, 100);
 });
 
 // Global functions for modals
