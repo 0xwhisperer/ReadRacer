@@ -214,6 +214,8 @@ class PDFWordReader {
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
                 this.db = request.result;
+                // Load library after DB is ready
+                this.openLibrary();
                 resolve(this.db);
             };
             
@@ -354,6 +356,10 @@ class PDFWordReader {
 
     async saveToLibraryWithName(name) {
         try {
+            console.log('Saving PDF to library:', name);
+            console.log('PDF data size:', this.tempPDF ? this.tempPDF.byteLength : 'null');
+            console.log('Word count:', this.words.length);
+            
             const transaction = this.db.transaction(['pdfs'], 'readwrite');
             const store = transaction.objectStore('pdfs');
             
@@ -366,15 +372,19 @@ class PDFWordReader {
                 readingProgress: 0
             };
 
+            console.log('PDF record:', pdfRecord);
+
             const request = store.add(pdfRecord);
             
             request.onsuccess = () => {
+                console.log('PDF saved successfully with ID:', request.result);
                 this.updateStatus(`"${name}" saved to library`);
                 // Refresh library display
                 this.openLibrary();
             };
             
             request.onerror = () => {
+                console.error('Error saving PDF:', request.error);
                 this.updateStatus('Error saving to library');
             };
             
@@ -685,16 +695,20 @@ class PDFWordReader {
 
     async openLibrary() {
         try {
+            console.log('Opening library...');
             const transaction = this.db.transaction(['pdfs'], 'readonly');
             const store = transaction.objectStore('pdfs');
             const request = store.getAll();
             
             request.onsuccess = () => {
                 const pdfs = request.result;
+                console.log('Found PDFs in library:', pdfs.length);
+                console.log('PDFs:', pdfs);
                 this.displayLibrary(pdfs);
             };
             
             request.onerror = () => {
+                console.error('Error opening library:', request.error);
                 this.updateStatus('Error loading library');
             };
             
