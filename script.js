@@ -61,7 +61,7 @@ class PDFWordReader {
         this.resetBtn = document.getElementById('resetBtn');
         this.playBtn = document.getElementById('playBtn');
         this.centerPauseBtn = document.getElementById('centerPauseBtn');
-        this.saveToLibraryBtn = document.getElementById('saveToLibraryBtn');
+        // Note: saveToLibraryBtn was removed - auto-save workflow now
         this.wordDisplay = document.getElementById('wordDisplay');
         this.currentPDFTitle = document.getElementById('currentPDFTitle');
         this.contextPreview = document.getElementById('contextPreview');
@@ -145,9 +145,6 @@ class PDFWordReader {
                 this.settings.centerColor = e.target.value;
                 this.saveSettings();
             });
-        }
-        if (this.saveToLibraryBtn) {
-            // Save button removed - now auto-saving on upload
         }
         
         // Library upload button
@@ -788,14 +785,12 @@ class PDFWordReader {
                     // Update last read date
                     this.updateLastRead(id);
                     
-                    // Enable save button for loaded PDF
-                    if (this.saveToLibraryBtn) {
-                        this.saveToLibraryBtn.disabled = false;
-                        this.saveToLibraryBtn.textContent = '💾 Save Current';
-                    }
+                    // Note: saveToLibraryBtn was removed - auto-save workflow now
                     
                     // Close side panel
-                    this.closeSidePanel();
+                    if (window.pdfReader && typeof window.pdfReader.closeSidePanel === 'function') {
+                        window.pdfReader.closeSidePanel();
+                    }
                     
                     this.updateStatus(`Loaded "${pdfRecord.name}" from library`);
                 }
@@ -833,7 +828,7 @@ class PDFWordReader {
             this.updateStatus(`Loaded ${this.words.length} words`);
             this.wordDisplay.textContent = `Ready: ${this.words.length} words loaded`;
             this.enableControls(true);
-            this.saveToLibraryBtn.disabled = true;
+            // Note: saveToLibraryBtn was removed - no longer needed
             
         } catch (error) {
             console.error('Error loading PDF:', error);
