@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Read Racer v.01</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Readability/0.5.0/Readability.js"></script>
     <link rel="stylesheet" href="styles.css">
@@ -208,13 +209,13 @@
     </div>
 
     <!-- Side Panel -->
-    <div id="sidePanel" class="side-panel">
-        <div class="panel-header">
-            <div class="panel-title-row">
-                <h2>Read Racer</h2>
-                <button id="closeSidePanel" class="panel-close-btn">×</button>
+        <div id="sidePanel" class="side-panel">
+            <div class="panel-header">
+                <div class="panel-title-row">
+                    <h2 id="sidePanelTitle">Settings</h2>
+                    <button id="closeSidePanel" class="panel-close-btn">×</button>
+                </div>
             </div>
-        </div>
         
         <div class="tabs">
             <button class="tab-btn active" data-tab="settings">⚙️ Settings</button>
@@ -264,7 +265,7 @@
                                     <button type="button" class="stepper-btn" id="wpmUp" aria-label="Increase speed">+</button>
                                 </div>
                             </div>
-                            <div class="reading-control-row">
+                            <div class="reading-control-row font-size-control-row">
                                 <label class="reading-control-label" for="fontSize">Font Size</label>
                                 <div class="reading-control-cluster">
                                     <button type="button" class="stepper-btn" id="fontSizeDown" aria-label="Decrease font size">−</button>

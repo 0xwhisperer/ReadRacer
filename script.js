@@ -20,7 +20,7 @@ class PDFWordReader {
         this.pendingPositionSave = null;
         this.resumeCacheKey = 'readRacerLastViewedResume';
         this.searchCacheKey = 'readRacerPdfSearchState';
-        this.contextPreviewWordCount = 3;
+        this.contextPreviewWordCount = this.isPhoneLayout() ? 1 : 3;
         this.searchQuery = '';
         this.searchResults = [];
         this.currentSearchResultIndex = -1;
@@ -105,8 +105,8 @@ class PDFWordReader {
         // Note: saveToLibraryBtn was removed - auto-save workflow now
         this.display = document.getElementById('display');
         this.wordDisplay = document.getElementById('wordDisplay');
+        this.topBar = document.getElementById('topBar');
         this.pdfTitle = document.getElementById('pdfTitle');
-        console.log('PDF title element found:', this.pdfTitle);
         this.contextPreview = document.getElementById('contextPreview');
         this.statusDisplay = document.getElementById('status');
         this.progressDisplay = document.getElementById('progress');
@@ -137,6 +137,7 @@ class PDFWordReader {
         this.starfieldToggleBtn = document.getElementById('starfieldToggleBtn');
         this.menuToggle = document.getElementById('menuToggle');
         this.sidePanel = document.getElementById('sidePanel');
+        this.sidePanelTitle = document.getElementById('sidePanelTitle');
         this.closeSidePanelBtn = document.getElementById('closeSidePanel');
         
         // Navigation controls (may not exist in older versions)
@@ -312,6 +313,11 @@ class PDFWordReader {
                 this.currentLibrarySearchQuery = e.target.value.trim().toLowerCase();
                 this.openLibrary();
             });
+            this.librarySearchInput.addEventListener('focus', () => {
+                if (this.pdfSearchInput) {
+                    this.pdfSearchInput.blur();
+                }
+            });
         }
         
         // New UX event listeners (check if they exist)
@@ -419,6 +425,11 @@ class PDFWordReader {
             this.persistCurrentState();
         });
 
+        window.addEventListener('resize', () => {
+            this.contextPreviewWordCount = this.isPhoneLayout() ? 1 : 3;
+            this.refreshCurrentDisplay();
+        });
+
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.persistCurrentState();
@@ -443,7 +454,6 @@ class PDFWordReader {
     async loadLastViewedPDF() {
         try {
             this.persistCurrentState();
-            console.log('Loading last viewed PDF...');
             const transaction = this.db.transaction(['pdfs'], 'readonly');
             const store = transaction.objectStore('pdfs');
             const request = store.getAll();
@@ -451,7 +461,6 @@ class PDFWordReader {
             request.onsuccess = async () => {
                 const pdfs = request.result;
                 if (pdfs.length === 0) {
-                    console.log('No PDFs in library to load');
                     return;
                 }
                 
@@ -470,7 +479,6 @@ class PDFWordReader {
                 
                 if (lastViewedPDF) {
                     this.currentPDFId = lastViewedPDF.id;
-                    console.log('Loading last viewed PDF:', lastViewedPDF.name);
                     // Only set currentPDF data for actual PDF files
                     this.currentPDF = lastViewedPDF.type !== 'text' && lastViewedPDF.type !== 'url' ? lastViewedPDF.data : null;
                     this.currentPDFName = lastViewedPDF.name;
@@ -491,13 +499,10 @@ class PDFWordReader {
                     const cachedResume = this.getResumeCache();
                     if (cachedResume && cachedResume.pdfId === lastViewedPDF.id && typeof cachedResume.wordIndex === 'number') {
                         this.currentWordIndex = cachedResume.wordIndex;
-                        console.log('Restored cached word position:', this.currentWordIndex);
                     } else if (lastViewedPDF.lastWordIndex !== undefined) {
                         this.currentWordIndex = lastViewedPDF.lastWordIndex;
-                        console.log('Restored exact word position:', this.currentWordIndex);
                     } else {
                         this.currentWordIndex = Math.floor(lastViewedPDF.readingProgress * lastViewedPDF.wordCount / 100);
-                        console.log('Restored calculated position:', this.currentWordIndex);
                     }
                     this.hydrateLastReadMarker(lastViewedPDF);
                     this.hydrateBookmarks(lastViewedPDF);
@@ -524,8 +529,6 @@ class PDFWordReader {
                     
                     this.updateStatus(`Loaded "${lastViewedPDF.name}" - Ready to read`);
                     this.enableControls(true);
-                } else {
-                    console.log('No previously viewed PDF found');
                 }
             };
             
@@ -561,9 +564,7 @@ class PDFWordReader {
                     }
                     
                     const updateRequest = store.put(currentPDF);
-                    updateRequest.onsuccess = () => {
-                        console.log('Saved current position:', actualCurrentIndex);
-                    };
+                    updateRequest.onsuccess = () => {};
                     updateRequest.onerror = () => {
                         console.error('Error saving current position:', updateRequest.error);
                     };
@@ -1779,10 +1780,6 @@ class PDFWordReader {
 
     async saveToLibraryWithName(name) {
         return new Promise((resolve, reject) => {
-            console.log('Saving PDF to library:', name);
-            console.log('PDF data size:', this.tempPDF ? this.tempPDF.byteLength : 'null');
-            console.log('Word count:', this.words.length);
-            
             const transaction = this.db.transaction(['pdfs'], 'readwrite');
             const store = transaction.objectStore('pdfs');
             
@@ -1798,12 +1795,9 @@ class PDFWordReader {
                 bookmarks: []
             };
 
-            console.log('PDF record:', pdfRecord);
-
             const request = store.add(pdfRecord);
             
             request.onsuccess = () => {
-                console.log('PDF saved successfully with ID:', request.result);
                 this.updateStatus(`"${name}" saved to library`);
                 // Refresh library display
                 this.openLibrary();
@@ -1850,6 +1844,38 @@ class PDFWordReader {
         return !!(this.currentPDFName && this.words.length > 0);
     }
 
+    isMobileLayout() {
+        return typeof window !== 'undefined' && window.matchMedia('(max-width: 1024px)').matches;
+    }
+
+    isPhoneLayout() {
+        return typeof window !== 'undefined' && window.matchMedia('(max-width: 520px)').matches;
+    }
+
+    getEffectiveFontSize(text = '') {
+        if (!this.isPhoneLayout()) {
+            return this.settings.fontSize;
+        }
+
+        const viewportWidth = window.innerWidth || 390;
+        const normalizedText = String(text || '').trim();
+        const wordLength = normalizedText.length;
+        let size = Math.round(viewportWidth * 0.105);
+
+        if (wordLength > 8) {
+            size -= Math.round((wordLength - 8) * 1.8);
+        }
+        if (wordLength > 12) {
+            size -= Math.round((wordLength - 12) * 1.2);
+        }
+
+        return Math.max(26, Math.min(46, size));
+    }
+
+    getDefaultAmbientStarfield() {
+        return !this.isMobileLayout();
+    }
+
     syncReaderChromeVisibility() {
         const hasLoadedPdf = this.hasLoadedPdf();
         const showProgress = hasLoadedPdf && this.settings.showProgressBar;
@@ -1869,6 +1895,9 @@ class PDFWordReader {
         }
         if (this.pdfTitle) {
             this.pdfTitle.style.display = hasLoadedPdf && this.settings.showTitle ? 'block' : 'none';
+        }
+        if (hasLoadedPdf) {
+            this.setPdfSearchOpen(this.isMobileLayout() ? true : this.pdfSearchShell && this.pdfSearchShell.classList.contains('open'));
         }
         if (!hasLoadedPdf) {
             this.searchQuery = '';
@@ -2087,10 +2116,11 @@ class PDFWordReader {
     }
 
     updateFontSize(size) {
-        this.wordDisplay.style.fontSize = `${size}px`;
+        const effectiveSize = this.isMobileLayout() ? this.getEffectiveFontSize() : size;
+        this.wordDisplay.style.fontSize = `${effectiveSize}px`;
         if (this.contextPreview) {
             this.contextPreview.style.fontFamily = this.settings.fontFamily;
-            this.contextPreview.style.fontSize = `${Math.max(14, Math.round(size * 0.28))}px`;
+            this.contextPreview.style.fontSize = `${Math.max(14, Math.round(effectiveSize * 0.28))}px`;
         }
         this.refreshCurrentDisplay();
     }
@@ -2114,20 +2144,24 @@ class PDFWordReader {
 
     setPdfSearchOpen(isOpen) {
         if (!this.pdfSearchShell || !this.pdfSearchPanel) return;
-        const shouldOpen = this.hasLoadedPdf() && isOpen;
+        const shouldOpen = this.hasLoadedPdf() && (this.isMobileLayout() || isOpen);
         this.pdfSearchShell.classList.toggle('open', shouldOpen);
+        if (this.topBar) {
+            this.topBar.classList.toggle('search-open', shouldOpen);
+        }
         this.pdfSearchPanel.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true');
         if (this.searchToggleBtn) {
             this.searchToggleBtn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
         }
         this.updateSearchCache();
-        if (shouldOpen && this.pdfSearchInput) {
+        if (shouldOpen && this.pdfSearchInput && !(this.sidePanel && this.sidePanel.classList.contains('open'))) {
             requestAnimationFrame(() => this.pdfSearchInput.focus());
         }
     }
 
     togglePdfSearch() {
         if (!this.hasLoadedPdf()) return;
+        if (this.isMobileLayout()) return;
         const isOpen = this.pdfSearchShell && this.pdfSearchShell.classList.contains('open');
         this.setPdfSearchOpen(!isOpen);
     }
@@ -2511,11 +2545,12 @@ class PDFWordReader {
             .replace(/'/g, '&#39;');
     }
 
-    getReaderTypography() {
+    getReaderTypography(text = '') {
         const computed = window.getComputedStyle(this.wordDisplay);
+        const effectiveFontSize = this.getEffectiveFontSize(text);
         return {
             fontFamily: this.settings.fontFamily,
-            fontSize: `${this.settings.fontSize}px`,
+            fontSize: `${effectiveFontSize}px`,
             fontWeight: computed.fontWeight || '400',
             fontStyle: computed.fontStyle || 'normal',
             letterSpacing: computed.letterSpacing === 'normal' ? '0px' : computed.letterSpacing,
@@ -2523,7 +2558,7 @@ class PDFWordReader {
         };
     }
 
-    renderDisplayMarkup(markup, { smooth = false } = {}) {
+    renderDisplayMarkup(markup, { smooth = false, fontSize = null } = {}) {
         if (!this.wordDisplay) return;
 
         const applyContent = () => {
@@ -2553,17 +2588,20 @@ class PDFWordReader {
         this.wordDisplay.style.justifyContent = 'center';
         this.wordDisplay.style.textAlign = 'center';
         this.wordDisplay.style.letterSpacing = '0';
-        this.wordDisplay.style.setProperty('--reader-font-size', `${this.settings.fontSize}px`);
+        const resolvedFontSize = Number.isFinite(fontSize)
+            ? fontSize
+            : this.getEffectiveFontSize(this.wordDisplay.textContent || '');
+        this.wordDisplay.style.setProperty('--reader-font-size', `${resolvedFontSize}px`);
         this.syncWordDisplayInteraction();
     }
 
     renderStatusMessage(message) {
-        const typography = this.getReaderTypography();
+        const typography = this.getReaderTypography(message);
         const escapedMessage = this.escapeSVGText(message);
         const markup = `
             <span class="reader-status-text" style="font-family: ${typography.fontFamily}; font-size: ${typography.fontSize}; font-weight: ${typography.fontWeight}; font-style: ${typography.fontStyle}; letter-spacing: ${typography.letterSpacing}; line-height: ${typography.lineHeight};">${escapedMessage}</span>
         `;
-        this.renderDisplayMarkup(markup);
+        this.renderDisplayMarkup(markup, { fontSize: parseFloat(typography.fontSize) });
     }
 
     buildContextWordElement(word, typography, position) {
@@ -2884,15 +2922,12 @@ class PDFWordReader {
 
     async openLibrary() {
         try {
-            console.log('Opening library...');
             const transaction = this.db.transaction(['pdfs'], 'readonly');
             const store = transaction.objectStore('pdfs');
             const request = store.getAll();
             
             request.onsuccess = () => {
                 const pdfs = request.result;
-                console.log('Found PDFs in library:', pdfs.length);
-                console.log('PDFs:', pdfs);
                 this.displayLibrary(pdfs);
                 this.updateDataManagementStats(pdfs);
             };
@@ -2911,9 +2946,10 @@ class PDFWordReader {
     displayLibrary(pdfs) {
         this.libraryList.innerHTML = '';
         const searchQuery = this.currentLibrarySearchQuery || '';
-        const visiblePdfs = searchQuery
+        const visiblePdfs = (searchQuery
             ? pdfs.filter((pdf) => String(pdf.name || '').toLowerCase().includes(searchQuery))
-            : pdfs;
+            : pdfs
+        ).slice();
         
         if (pdfs.length === 0) {
             this.libraryList.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;">No PDFs in library yet</p>';
@@ -2924,6 +2960,12 @@ class PDFWordReader {
             this.libraryList.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;">No matching titles</p>';
             return;
         }
+
+        visiblePdfs.sort((a, b) => {
+            const aLoaded = this.currentPDFId === a.id ? 1 : 0;
+            const bLoaded = this.currentPDFId === b.id ? 1 : 0;
+            return bLoaded - aLoaded;
+        });
 
         visiblePdfs.forEach(pdf => {
             const item = document.createElement('div');
@@ -3229,13 +3271,10 @@ class PDFWordReader {
                     const cachedResume = this.getResumeCache();
                     if (cachedResume && cachedResume.pdfId === pdfRecord.id && typeof cachedResume.wordIndex === 'number') {
                         this.currentWordIndex = cachedResume.wordIndex;
-                        console.log('Restored cached word position from library:', this.currentWordIndex);
                     } else if (pdfRecord.lastWordIndex !== undefined) {
                         this.currentWordIndex = pdfRecord.lastWordIndex;
-                        console.log('Restored exact word position from library:', this.currentWordIndex);
                     } else {
                         this.currentWordIndex = Math.floor(pdfRecord.readingProgress * pdfRecord.wordCount / 100);
-                        console.log('Calculated word position from progress:', this.currentWordIndex);
                     }
 
                     this.hydrateLastReadMarker(pdfRecord);
@@ -3445,6 +3484,8 @@ class PDFWordReader {
         const saved = localStorage.getItem('readRacerSettings');
         if (saved) {
             this.settings = { ...this.settings, ...JSON.parse(saved) };
+        } else {
+            this.settings.ambientStarfield = this.getDefaultAmbientStarfield();
         }
         this.applySettings();
     }
@@ -3662,6 +3703,12 @@ class PDFWordReader {
     }
 
     switchTab(tabName) {
+        const tabTitles = {
+            settings: 'Settings',
+            library: 'Library',
+            stats: 'Stats'
+        };
+
         // Update tab buttons
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('active');
@@ -3673,6 +3720,10 @@ class PDFWordReader {
             content.classList.remove('active');
         });
         document.getElementById(`${tabName}Tab`).classList.add('active');
+
+        if (this.sidePanelTitle) {
+            this.sidePanelTitle.textContent = tabTitles[tabName] || 'Settings';
+        }
         
         // Save active tab to settings
         this.settings.activeTab = tabName;
@@ -3792,7 +3843,7 @@ class PDFWordReader {
             this.contextPreview.textContent = '';
         }
         
-        const typography = this.getReaderTypography();
+        const typography = this.getReaderTypography(word);
         const centerColor = this.settings.centerColor;
         const renderedWord = this.buildWordCanvasElement(word, typography, centerColor);
         const previewCount = this.contextPreviewWordCount || 1;
@@ -3830,11 +3881,13 @@ class PDFWordReader {
             if (center) {
                 center.appendChild(this.buildSearchOccurrenceBadge(searchPreview.occurrence));
             }
-            this.renderDisplayMarkup(layout);
+            this.renderDisplayMarkup(layout, { fontSize: parseFloat(typography.fontSize) });
         } else if (shouldShowContextPreview && (previousWords.length || nextWords.length)) {
-            this.renderDisplayMarkup(this.buildReaderWordLayout(renderedWord, typography, previousWords, nextWords));
+            this.renderDisplayMarkup(this.buildReaderWordLayout(renderedWord, typography, previousWords, nextWords), {
+                fontSize: parseFloat(typography.fontSize)
+            });
         } else {
-            this.renderDisplayMarkup(renderedWord);
+            this.renderDisplayMarkup(renderedWord, { fontSize: parseFloat(typography.fontSize) });
         }
         
         // Break reminders
@@ -4015,6 +4068,7 @@ class PDFWordReader {
                 breakReminders: false,
                 highContrast: false,
                 largeTouchTargets: false,
+                ambientStarfield: this.getDefaultAmbientStarfield(),
                 wpm: 180,
                 fontSize: 32,
                 centerColor: '#FF0000',
@@ -4056,15 +4110,11 @@ class PDFWordReader {
 
 // Initialize the application when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Initializing PDF Reader...');
     window.pdfReader = new PDFWordReader();
-    console.log('PDF Reader initialized:', window.pdfReader);
-    console.log('closeSidePanel method exists:', typeof window.pdfReader.closeSidePanel);
     
     // Add click-outside listener after a short delay to ensure everything is initialized
-        setTimeout(() => {
-            console.log('Adding click-outside listener...');
-            document.addEventListener('click', (e) => {
+    setTimeout(() => {
+        document.addEventListener('click', (e) => {
                 const panel = document.getElementById('sidePanel');
                 const menuBtn = document.getElementById('menuToggle');
                 const isClickInsideModalContent = !!e.target.closest('.modal-content');
@@ -4077,16 +4127,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const isClickInsidePanel = panel.contains(e.target);
                 const isClickOnMenuBtn = menuBtn && (menuBtn === e.target || menuBtn.contains(e.target));
-                
-                console.log('Click detected - Inside panel:', isClickInsidePanel, 'On menu btn:', isClickOnMenuBtn);
-                
+
                 if (!isClickInsidePanel && !isClickOnMenuBtn) {
-                    console.log('Closing side panel due to outside click...');
                     window.pdfReader.closeSidePanel();
                 }
             }
         });
-        console.log('Click-outside listener added');
     }, 100);
 });
 
