@@ -728,11 +728,18 @@ class PDFWordReader {
                     </div>
                 </div>
                 <div class="library-item-actions">
-                    <button onclick="loadFromLibrary(${pdf.id})">Load</button>
-                    <button onclick="renameFromLibrary(${pdf.id})">Rename</button>
-                    <button onclick="deleteFromLibrary(${pdf.id})">Delete</button>
+                    <button onclick="event.stopPropagation(); renameFromLibrary(${pdf.id})">Rename</button>
+                    <button onclick="event.stopPropagation(); deleteFromLibrary(${pdf.id})">Delete</button>
                 </div>
             `;
+            
+            // Make the entire card clickable to load the PDF
+            item.addEventListener('click', () => {
+                this.loadFromLibrary(pdf.id);
+            });
+            
+            // Add hover cursor
+            item.style.cursor = 'pointer';
             
             this.libraryList.appendChild(item);
         });
