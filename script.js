@@ -938,7 +938,8 @@ class PDFWordReader {
                         'Cancel'
                     );
                     
-                    if (confirmed) {
+                    // Only delete if user explicitly confirmed (not cancelled)
+                    if (confirmed === true) {
                         await this.deletePdf(id);
                     }
                 }

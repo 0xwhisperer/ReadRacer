@@ -379,6 +379,10 @@
             color: #2d3748;
         }
 
+        .theme-light #pdfTitle {
+            color: rgba(45, 55, 72, 0.8);
+        }
+
         .theme-light .menu-btn {
             background: rgba(45, 55, 72, 0.1);
             border: 1px solid rgba(45, 55, 72, 0.2);
@@ -1500,6 +1504,7 @@
 <!-- Top Bar -->
     <div id="topBar">
         <div class="app-title">Read Racer v.01</div>
+        <div id="pdfTitle" style="color: rgba(255, 255, 255, 0.8); font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px;"></div>
         <button id="menuToggle" class="menu-btn">☰</button>
     </div>
 
@@ -1562,7 +1567,6 @@
     </div>
 
     <div id="display">
-            <div id="pdfTitle" style="color: rgba(255, 255, 255, 0.7); font-size: 16px; margin-bottom: 20px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 600px;"></div>
             <div id="contextPreview"></div>
             <div id="wordDisplay" onclick="document.getElementById('pdfFile').click()" style="cursor: pointer;">Upload a PDF to begin.</div>
             <div id="progressBar">
