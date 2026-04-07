@@ -422,46 +422,540 @@
             color: #666;
             cursor: not-allowed;
         }
+
+        /* Top Bar */
+        #topBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 100;
+        }
+
+        .app-title {
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .menu-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* Controls Redesign */
+        #controls {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px 20px;
+            z-index: 99;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .file-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #fff;
+        }
+
+        .file-label:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .file-label input[type="file"] {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 16px;
+        }
+
+        .upload-text {
+            font-size: 14px;
+        }
+
+        .speed-control, .font-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+        }
+
+        .speed-control label, .font-control label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .speed-control input, .font-control input {
+            width: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 4px 8px;
+            color: #fff;
+            text-align: center;
+        }
+
+        .unit {
+            font-size: 11px;
+            opacity: 0.6;
+        }
+
+        /* Floating Control Panel */
+        .floating-panel {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 12px;
+            z-index: 98;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .control-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .control-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-btn {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn.primary {
+            background: linear-gradient(135deg, #0080FF, #0066CC);
+            color: #fff;
+        }
+
+        .control-btn.primary:hover:not(:disabled) {
+            transform: scale(1.1);
+            box-shadow: 0 4px 16px rgba(0, 128, 255, 0.4);
+        }
+
+        .control-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-btn.secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .control-btn.tertiary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-btn.tertiary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .nav-btn-small {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn-small:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .nav-btn-small:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Side Panel */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            transition: right 0.3s ease;
+            z-index: 200;
+            overflow-y: auto;
+        }
+
+        .side-panel.open {
+            right: 0;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-header h2 {
+            color: #fff;
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .panel-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .tab-btn.active {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .panel-content {
+            padding: 20px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tab-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .tab-header h3 {
+            color: #fff;
+            margin: 0;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #0080FF, #0066CC);
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(0, 128, 255, 0.4);
+        }
+
+        .save-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Settings Grid */
+        .settings-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .setting-group {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .setting-group h4 {
+            color: #fff;
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+        }
+
+        .setting-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .setting-item select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-number {
+            color: #0080FF;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+        }
+
+        /* Library List */
+        .library-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .library-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .library-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .library-item-info {
+            flex: 1;
+            color: #fff;
+        }
+
+        .library-item-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .library-item-meta {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .library-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .library-item-actions button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.3s ease;
+        }
+
+        .library-item-actions button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Focus Mode */
+        .focus-mode #controls,
+        .focus-mode #topBar {
+            opacity: 0.1;
+            transition: opacity 0.3s ease;
+        }
+
+        .focus-mode #controls:hover,
+        .focus-mode #topBar:hover {
+            opacity: 1;
+        }
+
+        .focus-mode .floating-panel {
+            transform: translateX(-50%) scale(0.9);
+            opacity: 0.3;
+            transition: all 0.3s ease;
+        }
+
+        .focus-mode .floating-panel:hover {
+            transform: translateX(-50%) scale(1);
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .side-panel {
+                width: 100%;
+                right: -100%;
+            }
+            
+            #controls {
+                flex-direction: column;
+                gap: 10px;
+                padding: 10px;
+            }
+            
+            .floating-panel {
+                bottom: 20px;
+                padding: 8px;
+            }
+            
+            .control-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+            
+            .nav-btn-small {
+                width: 32px;
+                height: 32px;
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 <body>
+    <div id="topBar">
+        <div class="app-title">ReadRacer</div>
+        <button id="menuToggle" class="menu-btn">☰</button>
+    </div>
+
     <div id="controls">
         <div class="control-group">
-            <label for="pdfFile">Select PDF:</label>
-            <input type="file" id="pdfFile" accept=".pdf">
+            <label for="pdfFile" class="file-label">
+                <span class="upload-icon">📄</span>
+                <span class="upload-text">Upload PDF</span>
+                <input type="file" id="pdfFile" accept=".pdf">
+            </label>
             
-            <label for="wpm">Words Per Minute:</label>
-            <input type="number" id="wpm" value="300" min="50" max="1000" step="10">
+            <div class="speed-control">
+                <label for="wpm">Speed</label>
+                <input type="number" id="wpm" value="300" min="50" max="1000" step="10">
+                <span class="unit">WPM</span>
+            </div>
             
-            <label for="wordDelay">Word Delay (ms):</label>
-            <input type="number" id="wordDelay" value="200" min="50" max="5000" step="50" readonly>
-            
-            <label for="centerColor">Center Color:</label>
-            <select id="centerColor">
-                <option value="#FF0000">Red</option>
-                <option value="#00FF00">Green</option>
-                <option value="#0080FF">Blue</option>
-                <option value="#FFFF00">Yellow</option>
-                <option value="#FF00FF">Magenta</option>
-                <option value="#00FFFF">Cyan</option>
-                <option value="#FFA500">Orange</option>
-                <option value="#800080">Purple</option>
-                <option value="#FFC0CB">Pink</option>
-                <option value="#E0B0FF">Mauve</option>
-                <option value="#40E0D0">Turquoise</option>
-                <option value="#FFD700">Gold</option>
-                <option value="swatch">Swatch</option>
-            </select>
-            
-            <label for="fontSize">Font Size:</label>
-            <input type="number" id="fontSize" value="48" min="12" max="120" step="2">
-            
-            <button id="startBtn" disabled>Start</button>
-            <button id="pauseBtn" disabled>Pause</button>
-            <button id="resetBtn" disabled>Reset</button>
-            <button id="libraryBtn">Library</button>
-            <button id="saveToLibraryBtn" disabled>Save to Library</button>
-            <button id="settingsBtn">Settings</button>
+            <div class="font-control">
+                <label for="fontSize">Size</label>
+                <input type="number" id="fontSize" value="48" min="12" max="120" step="2">
+                <span class="unit">px</span>
+            </div>
         </div>
     </div>
 
@@ -471,128 +965,142 @@
         <div id="progressBar">
             <div id="progressFill"></div>
         </div>
-        <div class="nav-controls">
-            <button id="back10Btn" class="nav-btn" disabled>← 10</button>
-            <button id="back1Btn" class="nav-btn" disabled>← 1</button>
-            <button id="forward1Btn" class="nav-btn" disabled>1 →</button>
-            <button id="forward10Btn" class="nav-btn" disabled>10 →</button>
+        
+        <!-- Floating Control Panel -->
+        <div id="floatingControls" class="floating-panel">
+            <div class="control-row">
+                <button id="playBtn" class="control-btn primary" disabled>▶</button>
+                <button id="centerPauseBtn" class="control-btn secondary" disabled>❚❚</button>
+                <button id="resetBtn" class="control-btn tertiary" disabled>↺</button>
+            </div>
+            <div class="control-row">
+                <button id="back10Btn" class="nav-btn-small" disabled>←10</button>
+                <button id="back1Btn" class="nav-btn-small" disabled>←</button>
+                <button id="forward1Btn" class="nav-btn-small" disabled>→</button>
+                <button id="forward10Btn" class="nav-btn-small" disabled>10→</button>
+            </div>
         </div>
-        <div id="playbackControls">
-            <button id="playBtn" class="play-btn" disabled>▶</button>
-            <button id="centerPauseBtn" class="pause-btn" disabled>❚❚</button>
+        
+        <!-- Side Panel -->
+        <div id="sidePanel" class="side-panel">
+            <div class="panel-header">
+                <h2>Menu</h2>
+                <button id="closeSidePanel" class="close-btn">×</button>
+            </div>
+            
+            <div class="panel-tabs">
+                <button class="tab-btn active" data-tab="library">📚 Library</button>
+                <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
+                <button class="tab-btn" data-tab="stats">📊 Stats</button>
+            </div>
+            
+            <div class="panel-content">
+                <!-- Library Tab -->
+                <div id="libraryTab" class="tab-content active">
+                    <div class="tab-header">
+                        <h3>My Library</h3>
+                        <button id="saveToLibraryBtn" class="save-btn" disabled>💾 Save Current</button>
+                    </div>
+                    <div id="libraryList" class="library-list"></div>
+                </div>
+                
+                <!-- Settings Tab -->
+                <div id="settingsTab" class="tab-content">
+                    <div class="settings-grid">
+                        <div class="setting-group">
+                            <h4>Reading Experience</h4>
+                            <div class="setting-item">
+                                <label>Smooth Transitions</label>
+                                <div class="toggle-switch" id="smoothTransitions" onclick="toggleSetting('smoothTransitions')"></div>
+                            </div>
+                            <div class="setting-item">
+                                <label>Word Length Compensation</label>
+                                <div class="toggle-switch" id="wordLengthComp" onclick="toggleSetting('wordLengthComp')"></div>
+                            </div>
+                            <div class="setting-item">
+                                <label>Show Context Preview</label>
+                                <div class="toggle-switch" id="contextPreviewToggle" onclick="toggleSetting('contextPreviewToggle')"></div>
+                            </div>
+                            <div class="setting-item">
+                                <label>Visual Pulse</label>
+                                <div class="toggle-switch" id="visualPulse" onclick="toggleSetting('visualPulse')"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <h4>Visual Settings</h4>
+                            <div class="setting-item">
+                                <label>Theme</label>
+                                <select id="themeSelect" onchange="changeTheme(this.value)">
+                                    <option value="dark">🌙 Dark</option>
+                                    <option value="light">☀️ Light</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label>Center Color</label>
+                                <select id="centerColor" onchange="updateCenterColor(this.value)">
+                                    <option value="#FF0000">🔴 Red</option>
+                                    <option value="#00FF00">🟢 Green</option>
+                                    <option value="#0080FF">🔵 Blue</option>
+                                    <option value="#FFFF00">🟡 Yellow</option>
+                                    <option value="#swatch">🎨 Custom</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label>Font Family</label>
+                                <select id="fontFamily" onchange="changeFont(this.value)">
+                                    <option value="'Courier New', monospace">Courier</option>
+                                    <option value="'Monaco', monospace">Monaco</option>
+                                    <option value="'Consolas', monospace">Consolas</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <h4>Behavior</h4>
+                            <div class="setting-item">
+                                <label>Focus Mode</label>
+                                <div class="toggle-switch" id="focusMode" onclick="toggleSetting('focusMode')"></div>
+                            </div>
+                            <div class="setting-item">
+                                <label>Click to Pause</label>
+                                <div class="toggle-switch" id="clickToPause" onclick="toggleSetting('clickToPause')"></div>
+                            </div>
+                            <div class="setting-item">
+                                <label>Show Progress Bar</label>
+                                <div class="toggle-switch active" id="showProgressBar" onclick="toggleSetting('showProgressBar')"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stats Tab -->
+                <div id="statsTab" class="tab-content">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="wordsReadStat">0</div>
+                            <div class="stat-label">Words Read</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="sessionTimeStat">0m</div>
+                            <div class="stat-label">Session Time</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="currentStreakStat">0</div>
+                            <div class="stat-label">Current Streak</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="currentWPMStat">300</div>
+                            <div class="stat-label">Current WPM</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+        
         <div id="statsDisplay" style="display: none;"></div>
         <div id="status"></div>
         <div id="progress"></div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div id="settingsModal">
-        <div id="settingsContent">
-            <div class="library-header">
-                <h2>Settings</h2>
-                <button class="close-modal" onclick="closeSettingsModal()">Close</button>
-            </div>
-            
-            <div class="settings-section">
-                <h3>Reading Experience</h3>
-                <div class="setting-item">
-                    <label>Smooth Transitions</label>
-                    <div class="toggle-switch" id="smoothTransitions" onclick="toggleSetting('smoothTransitions')"></div>
-                </div>
-                <div class="setting-item">
-                    <label>Word Length Compensation</label>
-                    <div class="toggle-switch" id="wordLengthComp" onclick="toggleSetting('wordLengthComp')"></div>
-                </div>
-                <div class="setting-item">
-                    <label>Show Context Preview</label>
-                    <div class="toggle-switch" id="contextPreviewToggle" onclick="toggleSetting('contextPreviewToggle')"></div>
-                </div>
-                <div class="setting-item">
-                    <label>Visual Pulse on Center</label>
-                    <div class="toggle-switch" id="visualPulse" onclick="toggleSetting('visualPulse')"></div>
-                </div>
-                <div class="setting-item">
-                    <label>Focus Mode</label>
-                    <div class="toggle-switch" id="focusMode" onclick="toggleSetting('focusMode')"></div>
-                </div>
-            </div>
-
-            <div class="settings-section">
-                <h3>Visual Settings</h3>
-                <div class="setting-item">
-                    <label>Theme</label>
-                    <select id="themeSelect" onchange="changeTheme(this.value)">
-                        <option value="dark">Dark</option>
-                        <option value="light">Light</option>
-                    </select>
-                </div>
-                <div class="setting-item">
-                    <label>Font Family</label>
-                    <select id="fontFamily" onchange="changeFont(this.value)">
-                        <option value="'Courier New', monospace">Courier New</option>
-                        <option value="'Monaco', monospace">Monaco</option>
-                        <option value="'Consolas', monospace">Consolas</option>
-                        <option value="'Menlo', monospace">Menlo</option>
-                    </select>
-                </div>
-                <div class="setting-item">
-                    <label>Show Progress Bar</label>
-                    <div class="toggle-switch active" id="showProgressBar" onclick="toggleSetting('showProgressBar')"></div>
-                </div>
-            </div>
-
-            <div class="settings-section">
-                <h3>Navigation</h3>
-                <div class="setting-item">
-                    <label>Show Navigation Controls</label>
-                    <div class="toggle-switch active" id="showNavControls" onclick="toggleSetting('showNavControls')"></div>
-                </div>
-                <div class="setting-item">
-                    <label>Click to Pause</label>
-                    <div class="toggle-switch" id="clickToPause" onclick="toggleSetting('clickToPause')"></div>
-                </div>
-            </div>
-
-            <div class="settings-section">
-                <h3>Statistics & Tracking</h3>
-                <div class="setting-item">
-                    <label>Show Reading Stats</label>
-                    <div class="toggle-switch" id="showStats" onclick="toggleSetting('showStats')"></div>
-                </div>
-                <div class="setting-item">
-                    <label>Reading Streak Counter</label>
-                    <div class="toggle-switch" id="readingStreak" onclick="toggleSetting('readingStreak')"></div>
-                </div>
-                <div class="setting-item">
-                    <label>Break Reminders</label>
-                    <div class="toggle-switch" id="breakReminders" onclick="toggleSetting('breakReminders')"></div>
-                </div>
-            </div>
-
-            <div class="settings-section">
-                <h3>Accessibility</h3>
-                <div class="setting-item">
-                    <label>High Contrast Mode</label>
-                    <div class="toggle-switch" id="highContrast" onclick="toggleSetting('highContrast')"></div>
-                </div>
-                <div class="setting-item">
-                    <label>Larger Touch Targets</label>
-                    <div class="toggle-switch" id="largeTouchTargets" onclick="toggleSetting('largeTouchTargets')"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Library Modal -->
-    <div id="libraryModal">
-        <div id="libraryContent">
-            <div class="library-header">
-                <h2>My PDF Library</h2>
-                <button class="close-modal" onclick="closeLibraryModal()">Close</button>
-            </div>
-            <div id="libraryList"></div>
-        </div>
     </div>
 
     <script src="script.js"></script>

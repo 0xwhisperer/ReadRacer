@@ -69,11 +69,22 @@ class PDFWordReader {
         this.libraryList = document.getElementById('libraryList');
         this.settingsModal = document.getElementById('settingsModal');
         
+        // New UX elements
+        this.menuToggle = document.getElementById('menuToggle');
+        this.sidePanel = document.getElementById('sidePanel');
+        this.closeSidePanel = document.getElementById('closeSidePanel');
+        
         // Navigation controls
         this.back10Btn = document.getElementById('back10Btn');
         this.back1Btn = document.getElementById('back1Btn');
         this.forward1Btn = document.getElementById('forward1Btn');
         this.forward10Btn = document.getElementById('forward10Btn');
+        
+        // Stats elements
+        this.wordsReadStat = document.getElementById('wordsReadStat');
+        this.sessionTimeStat = document.getElementById('sessionTimeStat');
+        this.currentStreakStat = document.getElementById('currentStreakStat');
+        this.currentWPMStat = document.getElementById('currentWPMStat');
     }
 
     attachEventListeners() {
@@ -86,9 +97,11 @@ class PDFWordReader {
         this.fontSizeInput.addEventListener('input', (e) => this.updateFontSize(e.target.value));
         this.wpmInput.addEventListener('input', (e) => this.updateWPM(e.target.value));
         this.centerColorSelect.addEventListener('change', (e) => this.updateCenterColor(e.target.value));
-        this.libraryBtn.addEventListener('click', () => this.openLibrary());
         this.saveToLibraryBtn.addEventListener('click', () => this.saveToLibrary());
-        this.settingsBtn.addEventListener('click', () => this.openSettings());
+        
+        // New UX event listeners
+        this.menuToggle.addEventListener('click', () => this.openSidePanel());
+        this.closeSidePanel.addEventListener('click', () => this.closeSidePanel());
         
         // Navigation controls
         this.back10Btn.addEventListener('click', () => this.navigateWords(-10));
@@ -101,6 +114,11 @@ class PDFWordReader {
             if (this.settings.clickToPause && (this.isPlaying || this.isPaused)) {
                 this.pause();
             }
+        });
+        
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
         });
         
         // Keyboard shortcuts
@@ -405,7 +423,6 @@ class PDFWordReader {
             request.onsuccess = () => {
                 const pdfs = request.result;
                 this.displayLibrary(pdfs);
-                this.libraryModal.style.display = 'block';
             };
             
             request.onerror = () => {
@@ -422,7 +439,7 @@ class PDFWordReader {
         this.libraryList.innerHTML = '';
         
         if (pdfs.length === 0) {
-            this.libraryList.innerHTML = '<p style="color: #888; text-align: center;">No PDFs in library yet</p>';
+            this.libraryList.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;">No PDFs in library yet</p>';
             return;
         }
 
@@ -437,13 +454,13 @@ class PDFWordReader {
                 <div class="library-item-info">
                     <div class="library-item-title">${pdf.name}</div>
                     <div class="library-item-meta">
-                        ${pdf.wordCount} words • Added: ${dateAdded} • Last read: ${lastRead}
+                        ${pdf.wordCount.toLocaleString()} words • Added: ${dateAdded} • Last read: ${lastRead}
                         ${pdf.readingProgress > 0 ? ` • Progress: ${Math.round(pdf.readingProgress)}%` : ''}
                     </div>
                 </div>
                 <div class="library-item-actions">
-                    <button onclick="loadFromLibrary(${pdf.id})" class="play-btn">Load</button>
-                    <button onclick="deleteFromLibrary(${pdf.id})" style="background-color: #800020;">Delete</button>
+                    <button onclick="loadFromLibrary(${pdf.id})">Load</button>
+                    <button onclick="deleteFromLibrary(${pdf.id})">Delete</button>
                 </div>
             `;
             
@@ -470,8 +487,8 @@ class PDFWordReader {
                     // Update last read date
                     this.updateLastRead(id);
                     
-                    // Close library modal
-                    this.libraryModal.style.display = 'none';
+                    // Close side panel
+                    this.closeSidePanel();
                     
                     this.updateStatus(`Loaded "${pdfRecord.name}" from library`);
                 }
@@ -602,7 +619,38 @@ class PDFWordReader {
     }
 
     openSettings() {
-        this.settingsModal.style.display = 'block';
+        this.openSidePanel();
+        this.switchTab('settings');
+    }
+
+    // Side Panel Management
+    openSidePanel() {
+        this.sidePanel.classList.add('open');
+    }
+
+    closeSidePanel() {
+        this.sidePanel.classList.remove('open');
+    }
+
+    switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`${tabName}Tab`).classList.add('active');
+        
+        // Load content if needed
+        if (tabName === 'library') {
+            this.openLibrary();
+        } else if (tabName === 'stats') {
+            this.updateStatsDisplay();
+        }
     }
 
     // Statistics Management
@@ -619,17 +667,24 @@ class PDFWordReader {
     }
 
     updateStatsDisplay() {
-        if (!this.settings.showStats) return;
-        
         const sessionTime = this.stats.sessionStart ? 
             Math.round((Date.now() - this.stats.sessionStart) / 60000) : 0;
         
-        this.statsDisplay.innerHTML = `
-            <div>Words read: ${this.stats.wordsRead}</div>
-            <div>Session: ${sessionTime} min</div>
-            <div>Streak: ${this.stats.currentStreak}</div>
-            <div>WPM: ${this.wpmInput.value}</div>
-        `;
+        // Update side panel stats
+        this.wordsReadStat.textContent = this.stats.wordsRead.toLocaleString();
+        this.sessionTimeStat.textContent = `${sessionTime}m`;
+        this.currentStreakStat.textContent = this.stats.currentStreak;
+        this.currentWPMStat.textContent = this.wpmInput.value;
+        
+        // Update floating stats display if enabled
+        if (this.settings.showStats) {
+            this.statsDisplay.innerHTML = `
+                <div>Words: ${this.stats.wordsRead.toLocaleString()}</div>
+                <div>Session: ${sessionTime}m</div>
+                <div>Streak: ${this.stats.currentStreak}</div>
+                <div>WPM: ${this.wpmInput.value}</div>
+            `;
+        }
     }
 
     // Enhanced Navigation
@@ -735,14 +790,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Global functions for modals
-function closeLibraryModal() {
-    document.getElementById('libraryModal').style.display = 'none';
-}
-
-function closeSettingsModal() {
-    document.getElementById('settingsModal').style.display = 'none';
-}
-
 function loadFromLibrary(id) {
     window.pdfReader.loadFromLibrary(id);
 }
@@ -782,6 +829,13 @@ function changeFont(fontFamily) {
     document.getElementById('wordDisplay').style.fontFamily = fontFamily;
     window.pdfReader.settings.fontFamily = fontFamily;
     window.pdfReader.saveSettings();
+}
+
+function updateCenterColor(color) {
+    if (color === 'swatch') {
+        window.pdfReader.showColorPicker();
+    }
+    // Color will be applied on next word display
 }
 
 // Add CSS animation
