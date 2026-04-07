@@ -330,6 +330,23 @@ class PDFWordReader {
     }
 
     displayWord(word) {
+        // Word length compensation
+        let delay = parseInt(this.wordDelayInput.value);
+        if (this.settings.wordLengthComp) {
+            const avgWordLength = 5;
+            const lengthFactor = word.length / avgWordLength;
+            delay = Math.round(delay * lengthFactor);
+        }
+        
+        // Context preview
+        if (this.settings.contextPreviewToggle && this.contextPreview) {
+            const nextWords = this.words.slice(this.currentWordIndex + 1, this.currentWordIndex + 3);
+            this.contextPreview.textContent = nextWords.join(' ');
+            this.contextPreview.style.display = 'block';
+        } else if (this.contextPreview) {
+            this.contextPreview.style.display = 'none';
+        }
+        
         // Find the center character position
         const centerIndex = Math.floor(word.length / 2);
         
@@ -340,16 +357,52 @@ class PDFWordReader {
         
         // Create HTML with colored center character
         const centerColor = this.centerColorSelect.value;
-        this.wordDisplay.innerHTML = `
-            ${beforeCenter}<span style="color: ${centerColor};">${centerChar}</span>${afterCenter}
-        `;
+        
+        if (this.settings.smoothTransitions) {
+            this.wordDisplay.style.opacity = '0';
+            setTimeout(() => {
+                this.wordDisplay.innerHTML = `
+                    ${beforeCenter}<span style="color: ${centerColor}; ${this.settings.visualPulse ? 'animation: pulse 0.3s ease-in-out;' : ''}">${centerChar}</span>${afterCenter}
+                `;
+                this.wordDisplay.style.opacity = '1';
+            }, 100);
+        } else {
+            this.wordDisplay.innerHTML = `
+                ${beforeCenter}<span style="color: ${centerColor}; ${this.settings.visualPulse ? 'animation: pulse 0.3s ease-in-out;' : ''}">${centerChar}</span>${afterCenter}
+            `;
+        }
         
         // Center the word by positioning it absolutely and using transform
-        // This helps maintain consistent center positioning
         this.wordDisplay.style.position = 'absolute';
         this.wordDisplay.style.left = '50%';
         this.wordDisplay.style.top = '50%';
         this.wordDisplay.style.transform = 'translate(-50%, -50%)';
+        
+        // Update statistics
+        this.stats.wordsRead++;
+        this.updateStatsDisplay();
+        
+        // Break reminders
+        if (this.settings.breakReminders && this.stats.wordsRead % 500 === 0) {
+            this.showBreakReminder();
+        }
+    }
+
+    displayNextWord() {
+        if (this.currentWordIndex >= this.words.length) {
+            this.complete();
+            return;
+        }
+
+        const word = this.words[this.currentWordIndex];
+        this.displayWord(word);
+        this.updateProgress();
+        this.currentWordIndex++;
+
+        if (this.isPlaying && !this.isPaused) {
+            const delay = parseInt(this.wordDelayInput.value);
+            this.displayTimeout = setTimeout(() => this.displayNextWord(), delay);
+        }
     }
 
     updateFontSize(size) {
