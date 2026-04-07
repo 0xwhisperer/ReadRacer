@@ -246,6 +246,12 @@ class PDFWordReader {
             this.currentPDF = arrayBuffer.slice(0);
             this.currentPDFName = file.name;
             
+            // Enable save button when PDF is loaded
+            if (this.saveToLibraryBtn) {
+                this.saveToLibraryBtn.disabled = false;
+                this.saveToLibraryBtn.textContent = '💾 Save Current';
+            }
+            
             const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
             
             // Extract text from all pages
@@ -522,6 +528,12 @@ class PDFWordReader {
             return;
         }
 
+        // Update button to show saving state
+        if (this.saveToLibraryBtn) {
+            this.saveToLibraryBtn.textContent = '💾 Saving...';
+            this.saveToLibraryBtn.disabled = true;
+        }
+
         try {
             const transaction = this.db.transaction(['pdfs'], 'readwrite');
             const store = transaction.objectStore('pdfs');
@@ -539,16 +551,36 @@ class PDFWordReader {
             
             request.onsuccess = () => {
                 this.updateStatus(`"${this.currentPDFName}" saved to library`);
-                this.saveToLibraryBtn.disabled = true;
+                
+                // Reset button
+                if (this.saveToLibraryBtn) {
+                    this.saveToLibraryBtn.textContent = '💾 Save Current';
+                }
+                
+                // Refresh the library display
+                this.openLibrary();
+                
+                // Switch to library tab to show the saved item
+                this.switchTab('library');
             };
             
             request.onerror = () => {
                 this.updateStatus('Error saving to library');
+                // Reset button on error
+                if (this.saveToLibraryBtn) {
+                    this.saveToLibraryBtn.textContent = '💾 Save Current';
+                    this.saveToLibraryBtn.disabled = false;
+                }
             };
             
         } catch (error) {
             console.error('Error saving to library:', error);
             this.updateStatus('Error saving to library');
+            // Reset button on error
+            if (this.saveToLibraryBtn) {
+                this.saveToLibraryBtn.textContent = '💾 Save Current';
+                this.saveToLibraryBtn.disabled = false;
+            }
         }
     }
 
@@ -625,6 +657,12 @@ class PDFWordReader {
                     
                     // Update last read date
                     this.updateLastRead(id);
+                    
+                    // Enable save button for loaded PDF
+                    if (this.saveToLibraryBtn) {
+                        this.saveToLibraryBtn.disabled = false;
+                        this.saveToLibraryBtn.textContent = '💾 Save Current';
+                    }
                     
                     // Close side panel
                     this.closeSidePanel();
