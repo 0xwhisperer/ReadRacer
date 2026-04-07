@@ -11,9 +11,37 @@ class PDFWordReader {
         this.currentPDF = null;
         this.currentPDFName = '';
         
+        // Settings
+        this.settings = {
+            smoothTransitions: false,
+            wordLengthComp: false,
+            contextPreviewToggle: false,
+            visualPulse: false,
+            focusMode: false,
+            showProgressBar: true,
+            showNavControls: true,
+            clickToPause: false,
+            showStats: false,
+            readingStreak: false,
+            breakReminders: false,
+            highContrast: false,
+            largeTouchTargets: false
+        };
+        
+        // Statistics
+        this.stats = {
+            wordsRead: 0,
+            sessionStart: null,
+            totalReadingTime: 0,
+            currentStreak: 0,
+            lastBreakTime: null
+        };
+        
         this.initializeElements();
         this.attachEventListeners();
         this.initializeDB();
+        this.loadSettings();
+        this.initializeStats();
     }
 
     initializeElements() {
@@ -29,11 +57,23 @@ class PDFWordReader {
         this.centerPauseBtn = document.getElementById('centerPauseBtn');
         this.libraryBtn = document.getElementById('libraryBtn');
         this.saveToLibraryBtn = document.getElementById('saveToLibraryBtn');
+        this.settingsBtn = document.getElementById('settingsBtn');
         this.wordDisplay = document.getElementById('wordDisplay');
+        this.contextPreview = document.getElementById('contextPreview');
         this.statusDisplay = document.getElementById('status');
         this.progressDisplay = document.getElementById('progress');
+        this.progressBar = document.getElementById('progressBar');
+        this.progressFill = document.getElementById('progressFill');
+        this.statsDisplay = document.getElementById('statsDisplay');
         this.libraryModal = document.getElementById('libraryModal');
         this.libraryList = document.getElementById('libraryList');
+        this.settingsModal = document.getElementById('settingsModal');
+        
+        // Navigation controls
+        this.back10Btn = document.getElementById('back10Btn');
+        this.back1Btn = document.getElementById('back1Btn');
+        this.forward1Btn = document.getElementById('forward1Btn');
+        this.forward10Btn = document.getElementById('forward10Btn');
     }
 
     attachEventListeners() {
@@ -48,6 +88,20 @@ class PDFWordReader {
         this.centerColorSelect.addEventListener('change', (e) => this.updateCenterColor(e.target.value));
         this.libraryBtn.addEventListener('click', () => this.openLibrary());
         this.saveToLibraryBtn.addEventListener('click', () => this.saveToLibrary());
+        this.settingsBtn.addEventListener('click', () => this.openSettings());
+        
+        // Navigation controls
+        this.back10Btn.addEventListener('click', () => this.navigateWords(-10));
+        this.back1Btn.addEventListener('click', () => this.navigateWords(-1));
+        this.forward1Btn.addEventListener('click', () => this.navigateWords(1));
+        this.forward10Btn.addEventListener('click', () => this.navigateWords(10));
+        
+        // Click to pause
+        this.wordDisplay.addEventListener('click', () => {
+            if (this.settings.clickToPause && (this.isPlaying || this.isPaused)) {
+                this.pause();
+            }
+        });
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleKeyPress(e));
@@ -150,11 +204,22 @@ class PDFWordReader {
         
         this.isPlaying = true;
         this.isPaused = false;
+        
+        if (!this.stats.sessionStart) {
+            this.stats.sessionStart = Date.now();
+        }
+        
         this.startBtn.disabled = true;
         this.pauseBtn.disabled = false;
         this.playBtn.disabled = true;
         this.centerPauseBtn.disabled = false;
         this.resetBtn.disabled = false;
+        
+        // Enable navigation controls
+        this.back10Btn.disabled = false;
+        this.back1Btn.disabled = false;
+        this.forward1Btn.disabled = false;
+        this.forward10Btn.disabled = false;
         
         this.displayNextWord();
     }
@@ -276,11 +341,17 @@ class PDFWordReader {
     updateProgress() {
         if (this.words.length === 0) {
             this.progressDisplay.textContent = '';
+            this.progressFill.style.width = '0%';
             return;
         }
         
         const progress = Math.round((this.currentWordIndex / this.words.length) * 100);
         this.progressDisplay.textContent = `${this.currentWordIndex} / ${this.words.length} (${progress}%)`;
+        
+        // Update progress bar
+        if (this.settings.showProgressBar) {
+            this.progressFill.style.width = `${progress}%`;
+        }
     }
 
     enableControls(enabled) {
@@ -490,6 +561,160 @@ class PDFWordReader {
         }
     }
 
+    // Settings Management
+    loadSettings() {
+        const saved = localStorage.getItem('readRacerSettings');
+        if (saved) {
+            this.settings = { ...this.settings, ...JSON.parse(saved) };
+            this.applySettings();
+        }
+    }
+
+    saveSettings() {
+        localStorage.setItem('readRacerSettings', JSON.stringify(this.settings));
+    }
+
+    applySettings() {
+        // Apply settings to UI
+        Object.keys(this.settings).forEach(key => {
+            const toggle = document.getElementById(key);
+            if (toggle) {
+                if (this.settings[key]) {
+                    toggle.classList.add('active');
+                } else {
+                    toggle.classList.remove('active');
+                }
+            }
+        });
+
+        // Apply visual settings
+        this.progressBar.style.display = this.settings.showProgressBar ? 'block' : 'none';
+        this.statsDisplay.style.display = this.settings.showStats ? 'block' : 'none';
+        
+        const navControls = document.querySelector('.nav-controls');
+        navControls.style.display = this.settings.showNavControls ? 'flex' : 'none';
+        
+        if (this.settings.focusMode) {
+            document.body.classList.add('focus-mode');
+        } else {
+            document.body.classList.remove('focus-mode');
+        }
+    }
+
+    openSettings() {
+        this.settingsModal.style.display = 'block';
+    }
+
+    // Statistics Management
+    initializeStats() {
+        const saved = localStorage.getItem('readRacerStats');
+        if (saved) {
+            this.stats = { ...this.stats, ...JSON.parse(saved) };
+        }
+        this.updateStatsDisplay();
+    }
+
+    saveStats() {
+        localStorage.setItem('readRacerStats', JSON.stringify(this.stats));
+    }
+
+    updateStatsDisplay() {
+        if (!this.settings.showStats) return;
+        
+        const sessionTime = this.stats.sessionStart ? 
+            Math.round((Date.now() - this.stats.sessionStart) / 60000) : 0;
+        
+        this.statsDisplay.innerHTML = `
+            <div>Words read: ${this.stats.wordsRead}</div>
+            <div>Session: ${sessionTime} min</div>
+            <div>Streak: ${this.stats.currentStreak}</div>
+            <div>WPM: ${this.wpmInput.value}</div>
+        `;
+    }
+
+    // Enhanced Navigation
+    navigateWords(direction) {
+        if (this.words.length === 0) return;
+        
+        const wasPlaying = this.isPlaying;
+        if (wasPlaying) {
+            this.pause();
+        }
+        
+        this.currentWordIndex = Math.max(0, Math.min(this.words.length - 1, this.currentWordIndex + direction));
+        this.displayWord(this.words[this.currentWordIndex]);
+        this.updateProgress();
+        this.updateStatsDisplay();
+    }
+
+    // Enhanced Word Display
+    displayWord(word) {
+        // Word length compensation
+        let delay = parseInt(this.wordDelayInput.value);
+        if (this.settings.wordLengthComp) {
+            const avgWordLength = 5;
+            const lengthFactor = word.length / avgWordLength;
+            delay = Math.round(delay * lengthFactor);
+        }
+        
+        // Context preview
+        if (this.settings.contextPreviewToggle) {
+            const nextWords = this.words.slice(this.currentWordIndex + 1, this.currentWordIndex + 3);
+            this.contextPreview.textContent = nextWords.join(' ');
+            this.contextPreview.style.display = 'block';
+        } else {
+            this.contextPreview.style.display = 'none';
+        }
+        
+        // Find the center character position
+        const centerIndex = Math.floor(word.length / 2);
+        
+        // Split the word into parts
+        const beforeCenter = word.substring(0, centerIndex);
+        const centerChar = word[centerIndex];
+        const afterCenter = word.substring(centerIndex + 1);
+        
+        // Create HTML with colored center character
+        const centerColor = this.centerColorSelect.value;
+        
+        if (this.settings.smoothTransitions) {
+            this.wordDisplay.style.opacity = '0';
+            setTimeout(() => {
+                this.wordDisplay.innerHTML = `
+                    ${beforeCenter}<span style="color: ${centerColor}; ${this.settings.visualPulse ? 'animation: pulse 0.3s ease-in-out;' : ''}">${centerChar}</span>${afterCenter}
+                `;
+                this.wordDisplay.style.opacity = '1';
+            }, 100);
+        } else {
+            this.wordDisplay.innerHTML = `
+                ${beforeCenter}<span style="color: ${centerColor}; ${this.settings.visualPulse ? 'animation: pulse 0.3s ease-in-out;' : ''}">${centerChar}</span>${afterCenter}
+            `;
+        }
+        
+        // Center the word by positioning it absolutely and using transform
+        this.wordDisplay.style.position = 'absolute';
+        this.wordDisplay.style.left = '50%';
+        this.wordDisplay.style.top = '50%';
+        this.wordDisplay.style.transform = 'translate(-50%, -50%)';
+        
+        // Update statistics
+        this.stats.wordsRead++;
+        this.updateStatsDisplay();
+        
+        // Break reminders
+        if (this.settings.breakReminders && this.stats.wordsRead % 500 === 0) {
+            this.showBreakReminder();
+        }
+    }
+
+    showBreakReminder() {
+        if (confirm('You\'ve read 500 words! Time for a quick break?')) {
+            this.pause();
+            this.stats.lastBreakTime = Date.now();
+            this.saveStats();
+        }
+    }
+
     complete() {
         this.isPlaying = false;
         this.startBtn.disabled = false;
@@ -509,9 +734,13 @@ document.addEventListener('DOMContentLoaded', () => {
     window.pdfReader = new PDFWordReader();
 });
 
-// Global functions for library modal
+// Global functions for modals
 function closeLibraryModal() {
     document.getElementById('libraryModal').style.display = 'none';
+}
+
+function closeSettingsModal() {
+    document.getElementById('settingsModal').style.display = 'none';
 }
 
 function loadFromLibrary(id) {
@@ -521,3 +750,51 @@ function loadFromLibrary(id) {
 function deleteFromLibrary(id) {
     window.pdfReader.deleteFromLibrary(id);
 }
+
+// Global functions for settings
+function toggleSetting(settingId) {
+    const toggle = document.getElementById(settingId);
+    const isActive = toggle.classList.contains('active');
+    
+    if (isActive) {
+        toggle.classList.remove('active');
+        window.pdfReader.settings[settingId] = false;
+    } else {
+        toggle.classList.add('active');
+        window.pdfReader.settings[settingId] = true;
+    }
+    
+    window.pdfReader.saveSettings();
+    window.pdfReader.applySettings();
+}
+
+function changeTheme(theme) {
+    if (theme === 'light') {
+        document.body.classList.add('theme-light');
+    } else {
+        document.body.classList.remove('theme-light');
+    }
+    window.pdfReader.settings.theme = theme;
+    window.pdfReader.saveSettings();
+}
+
+function changeFont(fontFamily) {
+    document.getElementById('wordDisplay').style.fontFamily = fontFamily;
+    window.pdfReader.settings.fontFamily = fontFamily;
+    window.pdfReader.saveSettings();
+}
+
+// Add CSS animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+    
+    #wordDisplay {
+        transition: opacity 0.1s ease-in-out;
+    }
+`;
+document.head.appendChild(style);

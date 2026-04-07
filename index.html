@@ -242,6 +242,186 @@
         .close-modal:hover {
             background-color: #444;
         }
+
+        #settingsModal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+        }
+
+        #settingsContent {
+            background-color: #111;
+            margin: 2% auto;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .settings-section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #222;
+            border-radius: 6px;
+        }
+
+        .settings-section h3 {
+            color: #fff;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 8px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            color: #ccc;
+        }
+
+        .setting-item label {
+            flex: 1;
+            margin-right: 15px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background-color: #444;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .toggle-switch.active {
+            background-color: #0080FF;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: #fff;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(26px);
+        }
+
+        #progressBar {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 600px;
+            height: 4px;
+            background-color: #333;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        #progressFill {
+            height: 100%;
+            background-color: #0080FF;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        #contextPreview {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-family: 'Courier New', monospace;
+            color: #333;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .theme-light {
+            background-color: #fff !important;
+            color: #000 !important;
+        }
+
+        .theme-light #controls {
+            background-color: #f5f5f5 !important;
+            border-bottom-color: #ddd !important;
+        }
+
+        .theme-light .settings-section {
+            background-color: #f9f9f9 !important;
+        }
+
+        .theme-light #libraryContent {
+            background-color: #f9f9f9 !important;
+        }
+
+        .focus-mode #controls {
+            opacity: 0.1;
+            transition: opacity 0.3s ease;
+        }
+
+        .focus-mode #controls:hover {
+            opacity: 1;
+        }
+
+        #statsDisplay {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background-color: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            max-width: 200px;
+        }
+
+        .nav-controls {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .nav-btn:hover {
+            background-color: #444;
+        }
+
+        .nav-btn:disabled {
+            background-color: #222;
+            color: #666;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -281,17 +461,127 @@
             <button id="resetBtn" disabled>Reset</button>
             <button id="libraryBtn">Library</button>
             <button id="saveToLibraryBtn" disabled>Save to Library</button>
+            <button id="settingsBtn">Settings</button>
         </div>
     </div>
 
     <div id="display">
+        <div id="contextPreview"></div>
         <div id="wordDisplay">Upload a PDF to begin</div>
+        <div id="progressBar">
+            <div id="progressFill"></div>
+        </div>
+        <div class="nav-controls">
+            <button id="back10Btn" class="nav-btn" disabled>← 10</button>
+            <button id="back1Btn" class="nav-btn" disabled>← 1</button>
+            <button id="forward1Btn" class="nav-btn" disabled>1 →</button>
+            <button id="forward10Btn" class="nav-btn" disabled>10 →</button>
+        </div>
         <div id="playbackControls">
             <button id="playBtn" class="play-btn" disabled>▶</button>
             <button id="centerPauseBtn" class="pause-btn" disabled>❚❚</button>
         </div>
+        <div id="statsDisplay" style="display: none;"></div>
         <div id="status"></div>
         <div id="progress"></div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal">
+        <div id="settingsContent">
+            <div class="library-header">
+                <h2>Settings</h2>
+                <button class="close-modal" onclick="closeSettingsModal()">Close</button>
+            </div>
+            
+            <div class="settings-section">
+                <h3>Reading Experience</h3>
+                <div class="setting-item">
+                    <label>Smooth Transitions</label>
+                    <div class="toggle-switch" id="smoothTransitions" onclick="toggleSetting('smoothTransitions')"></div>
+                </div>
+                <div class="setting-item">
+                    <label>Word Length Compensation</label>
+                    <div class="toggle-switch" id="wordLengthComp" onclick="toggleSetting('wordLengthComp')"></div>
+                </div>
+                <div class="setting-item">
+                    <label>Show Context Preview</label>
+                    <div class="toggle-switch" id="contextPreviewToggle" onclick="toggleSetting('contextPreviewToggle')"></div>
+                </div>
+                <div class="setting-item">
+                    <label>Visual Pulse on Center</label>
+                    <div class="toggle-switch" id="visualPulse" onclick="toggleSetting('visualPulse')"></div>
+                </div>
+                <div class="setting-item">
+                    <label>Focus Mode</label>
+                    <div class="toggle-switch" id="focusMode" onclick="toggleSetting('focusMode')"></div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Visual Settings</h3>
+                <div class="setting-item">
+                    <label>Theme</label>
+                    <select id="themeSelect" onchange="changeTheme(this.value)">
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>Font Family</label>
+                    <select id="fontFamily" onchange="changeFont(this.value)">
+                        <option value="'Courier New', monospace">Courier New</option>
+                        <option value="'Monaco', monospace">Monaco</option>
+                        <option value="'Consolas', monospace">Consolas</option>
+                        <option value="'Menlo', monospace">Menlo</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>Show Progress Bar</label>
+                    <div class="toggle-switch active" id="showProgressBar" onclick="toggleSetting('showProgressBar')"></div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Navigation</h3>
+                <div class="setting-item">
+                    <label>Show Navigation Controls</label>
+                    <div class="toggle-switch active" id="showNavControls" onclick="toggleSetting('showNavControls')"></div>
+                </div>
+                <div class="setting-item">
+                    <label>Click to Pause</label>
+                    <div class="toggle-switch" id="clickToPause" onclick="toggleSetting('clickToPause')"></div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Statistics & Tracking</h3>
+                <div class="setting-item">
+                    <label>Show Reading Stats</label>
+                    <div class="toggle-switch" id="showStats" onclick="toggleSetting('showStats')"></div>
+                </div>
+                <div class="setting-item">
+                    <label>Reading Streak Counter</label>
+                    <div class="toggle-switch" id="readingStreak" onclick="toggleSetting('readingStreak')"></div>
+                </div>
+                <div class="setting-item">
+                    <label>Break Reminders</label>
+                    <div class="toggle-switch" id="breakReminders" onclick="toggleSetting('breakReminders')"></div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Accessibility</h3>
+                <div class="setting-item">
+                    <label>High Contrast Mode</label>
+                    <div class="toggle-switch" id="highContrast" onclick="toggleSetting('highContrast')"></div>
+                </div>
+                <div class="setting-item">
+                    <label>Larger Touch Targets</label>
+                    <div class="toggle-switch" id="largeTouchTargets" onclick="toggleSetting('largeTouchTargets')"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Library Modal -->
