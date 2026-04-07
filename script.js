@@ -55,9 +55,7 @@ class PDFWordReader {
         this.resetBtn = document.getElementById('resetBtn');
         this.playBtn = document.getElementById('playBtn');
         this.centerPauseBtn = document.getElementById('centerPauseBtn');
-        this.libraryBtn = document.getElementById('libraryBtn');
         this.saveToLibraryBtn = document.getElementById('saveToLibraryBtn');
-        this.settingsBtn = document.getElementById('settingsBtn');
         this.wordDisplay = document.getElementById('wordDisplay');
         this.contextPreview = document.getElementById('contextPreview');
         this.statusDisplay = document.getElementById('status');
@@ -65,26 +63,28 @@ class PDFWordReader {
         this.progressBar = document.getElementById('progressBar');
         this.progressFill = document.getElementById('progressFill');
         this.statsDisplay = document.getElementById('statsDisplay');
-        this.libraryModal = document.getElementById('libraryModal');
-        this.libraryList = document.getElementById('libraryList');
-        this.settingsModal = document.getElementById('settingsModal');
         
-        // New UX elements
+        // New UX elements (may not exist in older versions)
         this.menuToggle = document.getElementById('menuToggle');
         this.sidePanel = document.getElementById('sidePanel');
         this.closeSidePanel = document.getElementById('closeSidePanel');
         
-        // Navigation controls
+        // Navigation controls (may not exist in older versions)
         this.back10Btn = document.getElementById('back10Btn');
         this.back1Btn = document.getElementById('back1Btn');
         this.forward1Btn = document.getElementById('forward1Btn');
         this.forward10Btn = document.getElementById('forward10Btn');
         
-        // Stats elements
+        // Stats elements (may not exist in older versions)
         this.wordsReadStat = document.getElementById('wordsReadStat');
         this.sessionTimeStat = document.getElementById('sessionTimeStat');
         this.currentStreakStat = document.getElementById('currentStreakStat');
         this.currentWPMStat = document.getElementById('currentWPMStat');
+        
+        // Library and settings modals (may not exist in newer versions)
+        this.libraryModal = document.getElementById('libraryModal');
+        this.libraryList = document.getElementById('libraryList');
+        this.settingsModal = document.getElementById('settingsModal');
     }
 
     attachEventListeners() {
@@ -99,15 +99,27 @@ class PDFWordReader {
         this.centerColorSelect.addEventListener('change', (e) => this.updateCenterColor(e.target.value));
         this.saveToLibraryBtn.addEventListener('click', () => this.saveToLibrary());
         
-        // New UX event listeners
-        this.menuToggle.addEventListener('click', () => this.openSidePanel());
-        this.closeSidePanel.addEventListener('click', () => this.closeSidePanel());
+        // New UX event listeners (check if they exist)
+        if (this.menuToggle) {
+            this.menuToggle.addEventListener('click', () => this.openSidePanel());
+        }
+        if (this.closeSidePanel) {
+            this.closeSidePanel.addEventListener('click', () => this.closeSidePanel());
+        }
         
-        // Navigation controls
-        this.back10Btn.addEventListener('click', () => this.navigateWords(-10));
-        this.back1Btn.addEventListener('click', () => this.navigateWords(-1));
-        this.forward1Btn.addEventListener('click', () => this.navigateWords(1));
-        this.forward10Btn.addEventListener('click', () => this.navigateWords(10));
+        // Navigation controls (check if they exist)
+        if (this.back10Btn) {
+            this.back10Btn.addEventListener('click', () => this.navigateWords(-10));
+        }
+        if (this.back1Btn) {
+            this.back1Btn.addEventListener('click', () => this.navigateWords(-1));
+        }
+        if (this.forward1Btn) {
+            this.forward1Btn.addEventListener('click', () => this.navigateWords(1));
+        }
+        if (this.forward10Btn) {
+            this.forward10Btn.addEventListener('click', () => this.navigateWords(10));
+        }
         
         // Click to pause
         this.wordDisplay.addEventListener('click', () => {
@@ -233,11 +245,11 @@ class PDFWordReader {
         this.centerPauseBtn.disabled = false;
         this.resetBtn.disabled = false;
         
-        // Enable navigation controls
-        this.back10Btn.disabled = false;
-        this.back1Btn.disabled = false;
-        this.forward1Btn.disabled = false;
-        this.forward10Btn.disabled = false;
+        // Enable navigation controls if they exist
+        if (this.back10Btn) this.back10Btn.disabled = false;
+        if (this.back1Btn) this.back1Btn.disabled = false;
+        if (this.forward1Btn) this.forward1Btn.disabled = false;
+        if (this.forward10Btn) this.forward10Btn.disabled = false;
         
         this.displayNextWord();
     }
@@ -359,15 +371,17 @@ class PDFWordReader {
     updateProgress() {
         if (this.words.length === 0) {
             this.progressDisplay.textContent = '';
-            this.progressFill.style.width = '0%';
+            if (this.progressFill) {
+                this.progressFill.style.width = '0%';
+            }
             return;
         }
         
         const progress = Math.round((this.currentWordIndex / this.words.length) * 100);
         this.progressDisplay.textContent = `${this.currentWordIndex} / ${this.words.length} (${progress}%)`;
         
-        // Update progress bar
-        if (this.settings.showProgressBar) {
+        // Update progress bar if element exists
+        if (this.progressFill && this.settings.showProgressBar) {
             this.progressFill.style.width = `${progress}%`;
         }
     }
@@ -670,14 +684,22 @@ class PDFWordReader {
         const sessionTime = this.stats.sessionStart ? 
             Math.round((Date.now() - this.stats.sessionStart) / 60000) : 0;
         
-        // Update side panel stats
-        this.wordsReadStat.textContent = this.stats.wordsRead.toLocaleString();
-        this.sessionTimeStat.textContent = `${sessionTime}m`;
-        this.currentStreakStat.textContent = this.stats.currentStreak;
-        this.currentWPMStat.textContent = this.wpmInput.value;
+        // Update side panel stats if elements exist
+        if (this.wordsReadStat) {
+            this.wordsReadStat.textContent = this.stats.wordsRead.toLocaleString();
+        }
+        if (this.sessionTimeStat) {
+            this.sessionTimeStat.textContent = `${sessionTime}m`;
+        }
+        if (this.currentStreakStat) {
+            this.currentStreakStat.textContent = this.stats.currentStreak;
+        }
+        if (this.currentWPMStat) {
+            this.currentWPMStat.textContent = this.wpmInput.value;
+        }
         
-        // Update floating stats display if enabled
-        if (this.settings.showStats) {
+        // Update floating stats display if enabled and element exists
+        if (this.settings.showStats && this.statsDisplay) {
             this.statsDisplay.innerHTML = `
                 <div>Words: ${this.stats.wordsRead.toLocaleString()}</div>
                 <div>Session: ${sessionTime}m</div>
@@ -713,11 +735,11 @@ class PDFWordReader {
         }
         
         // Context preview
-        if (this.settings.contextPreviewToggle) {
+        if (this.settings.contextPreviewToggle && this.contextPreview) {
             const nextWords = this.words.slice(this.currentWordIndex + 1, this.currentWordIndex + 3);
             this.contextPreview.textContent = nextWords.join(' ');
             this.contextPreview.style.display = 'block';
-        } else {
+        } else if (this.contextPreview) {
             this.contextPreview.style.display = 'none';
         }
         
