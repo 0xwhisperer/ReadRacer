@@ -216,7 +216,8 @@ class PDFWordReader {
 
         try {
             const arrayBuffer = await file.arrayBuffer();
-            this.currentPDF = arrayBuffer;
+            // Create a copy of the ArrayBuffer for library storage
+            this.currentPDF = arrayBuffer.slice(0);
             this.currentPDFName = file.name;
             
             const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
