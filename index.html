@@ -380,6 +380,15 @@
             background: rgba(45, 55, 72, 0.2);
         }
 
+        .theme-light .close-btn {
+            background: rgba(45, 55, 72, 0.1);
+            color: #2d3748;
+        }
+
+        .theme-light .close-btn:hover {
+            background: rgba(45, 55, 72, 0.2);
+        }
+
         .theme-light #controls {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -671,39 +680,40 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 60px;
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
-            z-index: 100;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .app-title {
             color: #fff;
-            font-size: 24px;
+            font-size: 16px;
             font-weight: bold;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .menu-btn {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: #fff;
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 8px;
             cursor: pointer;
             font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: all 0.3s ease;
         }
 
         .menu-btn:hover {
             background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.05);
+        }    transform: scale(1.05);
         }
 
         /* Controls Redesign */
@@ -963,20 +973,47 @@
 
         .tab-header {
             display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .tab-header-top {
+            display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
         }
 
         .tab-header h3 {
             color: #fff;
             margin: 0;
+            font-size: 18px;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .tab-actions {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .upload-btn-small {
@@ -1278,11 +1315,13 @@
         <!-- Side Panel -->
         <div id="sidePanel" class="side-panel">
             <div class="panel-header">
-                <h2>Menu</h2>
-                <button id="closeSidePanel" class="close-btn">×</button>
+                <div class="tab-header-top">
+                    <h2>Read Racer</h2>
+                    <button id="closeSidePanel" class="close-btn">×</button>
+                </div>
             </div>
             
-            <div class="panel-tabs">
+            <div class="tabs">
                 <button class="tab-btn active" data-tab="library">📚 Library</button>
                 <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
                 <button class="tab-btn" data-tab="stats">📊 Stats</button>
