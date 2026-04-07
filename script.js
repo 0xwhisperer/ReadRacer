@@ -192,6 +192,18 @@ class PDFWordReader {
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+        
+        // Close panel when clicking outside
+        document.addEventListener('click', (e) => {
+            if (this.sidePanel && this.sidePanel.classList.contains('open')) {
+                const isClickInsidePanel = this.sidePanel.contains(e.target);
+                const isClickOnMenuToggle = this.menuToggle && this.menuToggle.contains(e.target);
+                
+                if (!isClickInsidePanel && !isClickOnMenuToggle) {
+                    this.closeSidePanel();
+                }
+            }
+        });
     }
 
     // Initialize IndexedDB
@@ -217,23 +229,43 @@ class PDFWordReader {
         });
     }
 
-    handleKeyPress(event) {
-        // Ignore key presses when typing in input fields
-        if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT') {
+    handleKeyPress(e) {
+        // Close panel with Escape key
+        if (e.key === 'Escape' && this.sidePanel && this.sidePanel.classList.contains('open')) {
+            this.closeSidePanel();
             return;
         }
         
-        switch(event.key) {
-            case 'Escape':
-            case 'Enter':
-            case ' ':
-                event.preventDefault();
-                if (this.isPlaying && !this.isPaused) {
+        // Ignore key presses when typing in input fields
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        
+        // Reading controls
+        if (e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault();
+            if (this.words.length > 0) {
+                if (this.isPlaying) {
                     this.pause();
-                } else if (this.words.length > 0) {
+                } else {
                     this.start();
                 }
-                break;
+            }
+        } else if (e.key === 'ArrowLeft' && e.ctrlKey) {
+            e.preventDefault();
+            this.navigateWords(-10);
+        } else if (e.key === 'ArrowRight' && e.ctrlKey) {
+            e.preventDefault();
+            this.navigateWords(10);
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            this.navigateWords(-1);
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            this.navigateWords(1);
+        } else if (e.key === 'r' && e.ctrlKey) {
+            e.preventDefault();
+            this.reset();
         }
     }
 
