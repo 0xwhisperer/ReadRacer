@@ -1,12 +1,12 @@
 # Read Racer
 
-Read Racer is a browser-based PDF reader built for focused, high-speed reading.
+Read Racer is a browser-based speed reader built for focused, high-speed reading of PDFs, web articles, and custom text.
 
 ## What It Does
 
 Instead of asking the eye to travel line by line across a page, Read Racer presents one anchored word at a time in the center of the screen. The goal is to reduce unnecessary eye motion, keep attention fixed, and make it easier to move through dense material without losing your place.
 
-It is designed for people who want a cleaner, more controlled reading mode for long PDFs, study material, reference documents, and other text-heavy reading where flow, pace, and focus matter.
+It is designed for people who want a cleaner, more controlled reading mode for long PDFs, web articles, study material, reference documents, and other text-heavy reading where flow, pace, and focus matter.
 
 ## What Read Racer Is Trying To Do
 
@@ -16,11 +16,18 @@ Read Racer is not trying to replace deep reading with gimmicks. The point is to 
 - control over reading speed
 - less page clutter competing for attention
 - quick recovery when resuming a document later
-- a way to move through PDFs without fighting typical PDF layout problems
+- a way to move through content without fighting typical layout problems
 
-The app keeps processing local in the browser, stores PDFs on-device, and remembers your per-document progress so you can stop and come back to the exact word you were on.
+The app keeps processing local in the browser, stores content on-device, and remembers your per-document progress so you can stop and come back to the exact word you were on.
 
 ## Current Features
+
+### Content Sources
+- **PDF Upload**: Upload PDF files from your device
+- **URL Loading**: Load web articles by pasting a URL (uses Mozilla's Readability to extract article text)
+- **Custom Text**: Paste your own text directly into the app
+
+All content types are saved to your personal library with progress tracking.
 
 ### Reader
 - Word-by-word playback with adjustable `WPM`
@@ -39,12 +46,14 @@ The app keeps processing local in the browser, stores PDFs on-device, and rememb
 - In-document search with result navigation and phrase-aware preview
 
 ### Library
-- PDF upload from the Library tab
+- Three content sources: PDF upload, URL loading, and custom text paste
 - Local IndexedDB storage
-- Per-PDF progress persistence
+- Per-document progress persistence
 - Resume from the exact last word index
-- Rename PDFs from the library card title
-- Delete PDFs with confirmation
+- Rename items from the library card title
+- Delete items with confirmation
+- Search library by title
+- Visual highlight of currently loaded item
 
 ### Stats
 - Total words read
@@ -60,8 +69,11 @@ The app keeps processing local in the browser, stores PDFs on-device, and rememb
 ## How It Works
 
 1. Open the app in a modern browser.
-2. Open the side panel and upload a PDF from the Library tab.
-3. Name the PDF when prompted.
+2. Open the side panel and choose your content source from the Library tab:
+   - **Upload PDF**: Select a PDF file from your device
+   - **Load URL**: Paste a web article URL to extract and read
+   - **Load Text**: Paste custom text directly
+3. Name the document when prompted.
 4. Adjust reading settings in the Settings tab.
 5. Press `Play` to start.
 
@@ -74,7 +86,7 @@ The app keeps processing local in the browser, stores PDFs on-device, and rememb
 - `←10` / `10→`: move by ten words
 - Search results: `↑` / `↓` step through matches when a search is active
 - Header bookmark button: save a bookmark at the current word
-- Click the PDF title to open the current PDF in a new browser tab
+- Click the document title to open the source (PDFs open in new tab, URLs open original page)
 
 ### Keyboard
 - `Space`: play / pause
@@ -91,10 +103,11 @@ The app keeps processing local in the browser, stores PDFs on-device, and rememb
 The app persists:
 - reader settings in `localStorage`
 - reading stats in `localStorage`
-- PDFs and per-PDF reading position in IndexedDB
-- active in-document search for the currently loaded PDF across reloads
+- documents and per-document reading position in IndexedDB
+- active in-document search for the currently loaded document across reloads
+- last active tab in the preferences panel
 
-Per-PDF saved state includes:
+Per-document saved state includes:
 - title
 - word count
 - reading progress percentage
@@ -108,12 +121,12 @@ Per-PDF saved state includes:
 Read Racer can help when:
 
 - a reader loses place easily while scanning long lines
-- the visual density of a full PDF page is distracting
+- the visual density of a full page is distracting
 - reading speed drops because of regressions and eye travel
 - someone wants a controlled pace for study, review, or repeated reading
 - a reader wants to resume exactly where they left off later
 
-It can be especially useful for dense nonfiction, notes, technical documents, and study material where the reader wants more control over pace and focus than a normal PDF viewer provides.
+It can be especially useful for dense nonfiction, web articles, notes, technical documents, and study material where the reader wants more control over pace and focus than a normal viewer provides.
 
 ## Reading Rationale
 
@@ -131,7 +144,7 @@ There are a few practical reasons this can work:
 - **Less saccadic movement:** normal page reading requires the eyes to make repeated jumps across the line and back to the next line. A centered presentation reduces that movement demand.
 - **Stable fixation point:** the anchored center word gives the eyes a consistent place to land, which can make pacing feel easier and reduce visual drift.
 - **Controlled pacing:** adjusting `WPM` lets the reader find a speed that is challenging without immediately becoming chaos.
-- **Lower visual clutter:** showing only the active word, with optional dimmed context, removes most of the irrelevant page layout noise that often comes with PDFs.
+- **Lower visual clutter:** showing only the active word, with optional dimmed context, removes most of the irrelevant page layout noise.
 - **Reduced place loss:** because the app remembers the exact word position, it is easier to resume without spending time re-finding the spot.
 
 In other words, Read Racer is meant to help the reader become a **more focused** reader first. For some readers, once that focus becomes easier to maintain, higher reading speeds become more realistic and sustainable.
@@ -147,11 +160,13 @@ But comprehension still matters more than raw speed. If the text stops making se
 ## Current Notes
 
 - PDFs are flattened into words plus page-number mapping during parse.
-- The app does not currently build semantic chapter or section structure from PDFs.
+- Web articles are extracted using Mozilla's Readability.js for clean text.
+- Custom text is parsed directly with the same word extraction logic.
+- The app does not currently build semantic chapter or section structure.
 - All processing is local to the browser.
 
 ## Project Files
 
 - `index.html`: app structure
 - `styles.css`: app styles
-- `script.js`: reader logic, persistence, PDF parsing, and UI behavior
+- `script.js`: reader logic, persistence, content parsing, and UI behavior

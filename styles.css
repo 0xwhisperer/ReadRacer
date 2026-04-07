@@ -298,8 +298,8 @@ button {
             padding: 15px;
             margin-bottom: 10px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            align-items: stretch;
         }
 
         .library-item:hover {
@@ -2108,6 +2108,7 @@ button {
             flex-direction: column;
             gap: 10px;
             min-height: 36px;
+            margin: 0 0 16px 0;
         }
 
         .bookmark-empty {
@@ -3566,4 +3567,92 @@ button {
             .setting-input {
                 text-align: right;
             }
+        }
+
+        /* Library Bookmarks Section */
+        .library-bookmarks-card {
+            margin-top: 0px;
+        }
+
+        .library-bookmarks-card h4 {
+            margin: 0;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .bookmarks-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .theme-light .library-bookmarks-card h4 {
+            color: #0f172a;
+        }
+
+        /* Library Load Buttons */
+        .tab-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .tab-header h3 {
+            margin: 0;
+        }
+
+        .library-load-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .library-load-buttons .upload-btn-small {
+            padding: 6px 10px;
+            font-size: 12px;
+            white-space: nowrap;
+            flex: 1;
+            text-align: center;
+        }
+
+        /* Text Modal Inputs */
+        #textTitleInput, #textInput {
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .theme-light #textTitleInput,
+        .theme-light #textInput {
+            background: #ffffff;
+            border-color: rgba(59, 130, 246, 0.2);
+            color: #0f172a;
+        }
+
+        .theme-light #textTitleInput::placeholder,
+        .theme-light #textInput::placeholder {
+            color: rgba(55, 65, 81, 0.5);
+        }
+
+        .theme-light #textTitleInput:focus,
+        .theme-light #textInput:focus {
+            outline: none;
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        /* Currently loaded library item highlight */
+        .library-item.currently-loaded {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2), 0 8px 24px rgba(59, 130, 246, 0.15);
+        }
+
+        .library-item.currently-loaded::before {
+            opacity: 1;
+        }
+
+        .theme-light .library-item.currently-loaded {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15), 0 8px 24px rgba(59, 130, 246, 0.1);
         }

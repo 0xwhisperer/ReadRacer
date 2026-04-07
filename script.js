@@ -53,7 +53,8 @@ class PDFWordReader {
             fontSize: 32,
             centerColor: '#FF0000',
             theme: 'dark',
-            fontFamily: "'Courier New', monospace"
+            fontFamily: "'Courier New', monospace",
+            activeTab: 'settings'
         };
         
         // Statistics
@@ -431,7 +432,8 @@ class PDFWordReader {
         }
         this.updateSearchCache();
         this.stopReadingTimer();
-        if (this.currentPDF && this.currentPDFName && this.words.length > 0) {
+        // Save position for any loaded content (PDF or URL) - check currentPDFId instead of currentPDF
+        if (this.currentPDFId && this.currentPDFName && this.words.length > 0) {
             this.saveCurrentPosition();
         }
     }
@@ -451,17 +453,16 @@ class PDFWordReader {
                     return;
                 }
                 
-                // Find the PDF with the most recent lastRead date
+                // Find the PDF with the most recent lastRead date, or dateAdded if no lastRead
                 let lastViewedPDF = null;
                 let mostRecentDate = null;
                 
                 pdfs.forEach(pdf => {
-                    if (pdf.lastRead) {
-                        const readDate = new Date(pdf.lastRead);
-                        if (!mostRecentDate || readDate > mostRecentDate) {
-                            mostRecentDate = readDate;
-                            lastViewedPDF = pdf;
-                        }
+                    // Prefer lastRead date, but fall back to dateAdded for items never read
+                    const candidateDate = pdf.lastRead ? new Date(pdf.lastRead) : new Date(pdf.dateAdded);
+                    if (!mostRecentDate || candidateDate > mostRecentDate) {
+                        mostRecentDate = candidateDate;
+                        lastViewedPDF = pdf;
                     }
                 });
                 
@@ -483,8 +484,23 @@ class PDFWordReader {
                         console.log('Restored calculated position:', this.currentWordIndex);
                     }
                     
-                    // Load the PDF
-                    await this.loadPDFFromArrayBuffer(lastViewedPDF.data);
+                    // Load the content
+                    if (lastViewedPDF.type === 'url') {
+                        // URL article — load words from stored text
+                        this.loadWordsFromText(lastViewedPDF.textContent);
+                        this.currentWordIndex = cachedResume?.pdfId === lastViewedPDF.id
+                            ? (cachedResume.wordIndex || 0)
+                            : (lastViewedPDF.lastWordIndex || 0);
+                    } else if (lastViewedPDF.type === 'text') {
+                        // Text content — load words from stored text
+                        this.loadWordsFromText(lastViewedPDF.textContent);
+                        this.currentWordIndex = cachedResume?.pdfId === lastViewedPDF.id
+                            ? (cachedResume.wordIndex || 0)
+                            : (lastViewedPDF.lastWordIndex || 0);
+                    } else {
+                        // PDF — parse binary data
+                        await this.loadPDFFromArrayBuffer(lastViewedPDF.data);
+                    }
                     this.hydrateLastReadMarker(lastViewedPDF);
                     this.hydrateBookmarks(lastViewedPDF);
                     this.hydrateSearchState();
@@ -1113,6 +1129,306 @@ class PDFWordReader {
         }
     }
 
+    async loadFromURL(url) {
+        this.persistCurrentState();
+
+        try {
+            new URL(url);
+        } catch {
+            this.updateStatus('Invalid URL', 'error');
+            return;
+        }
+
+        this.renderStatusMessage('Fetching article...');
+        this.updateStatus('Fetching article...');
+
+        try {
+            // Try multiple CORS proxies in order
+            const proxies = [
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+                `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(url)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+            ];
+            
+            let html = '';
+            let lastError = null;
+            
+            for (const proxyUrl of proxies) {
+                try {
+                    this.updateStatus(`Trying proxy...`);
+                    const resp = await fetch(proxyUrl);
+                    if (resp.ok) {
+                        html = await resp.text();
+                        if (html && html.length > 100) {
+                            break; // Got valid content
+                        }
+                    }
+                } catch (err) {
+                    lastError = err;
+                    continue; // Try next proxy
+                }
+            }
+            
+            if (!html) {
+                throw lastError || new Error('All proxies failed');
+            }
+
+            this.updateStatus('Extracting article text...');
+
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+
+            // Fix relative URLs so Readability can resolve them
+            const base = doc.createElement('base');
+            base.href = url;
+            doc.head.prepend(base);
+
+            let title = '';
+            let textContent = '';
+
+            if (typeof Readability !== 'undefined') {
+                const article = new Readability(doc).parse();
+                if (article && article.textContent && article.textContent.trim().length > 50) {
+                    title = article.title || '';
+                    textContent = article.textContent;
+                }
+            }
+
+            // Fallback: if Readability didn't extract enough, use body text
+            if (!textContent || textContent.trim().length < 50) {
+                textContent = doc.body ? doc.body.innerText || doc.body.textContent : '';
+                if (!title) title = doc.title || '';
+            }
+
+            if (!textContent || textContent.trim().length < 20) {
+                this.updateStatus('Could not extract readable text from this URL.', 'error');
+                this.renderStatusMessage('Could not extract text. Try a different URL.');
+                return;
+            }
+
+            if (!title) {
+                try { title = new URL(url).hostname; } catch { title = 'Web Article'; }
+            }
+
+            // Split text into words
+            this.loadWordsFromText(textContent);
+
+            // Store for library
+            this.tempPDF = null;
+            this.tempPDFName = title;
+            this._tempUrlData = { url, title, text: textContent };
+
+            // Show naming modal so user can adjust the title
+            if (this.namingModal) {
+                let defaultName = title.replace(/_/g, ' ').trim();
+                this.pdfNameInput.value = defaultName;
+                this.namingModal.classList.add('show');
+                requestAnimationFrame(() => {
+                    const cancelBtn = this.namingModal.querySelector('.modal-btn.cancel');
+                    if (cancelBtn) cancelBtn.focus();
+                });
+            }
+        } catch (error) {
+            console.error('Error loading URL:', error);
+            this.updateStatus('Error loading URL. The site may block cross-origin requests.', 'error');
+            this.renderStatusMessage('Failed to load URL. Try a different article.');
+        }
+    }
+
+    loadFromText(text) {
+        this.persistCurrentState();
+        
+        if (!text || text.trim().length < 10) {
+            this.updateStatus('Please enter at least 10 characters of text', 'error');
+            return;
+        }
+        
+        this.loadWordsFromText(text);
+        
+        // Store for library saving
+        this.tempPDF = null;
+        this.tempPDFName = 'Custom Text';
+        this._tempTextData = { text };
+        
+        // Show naming modal
+        if (this.namingModal) {
+            this.pdfNameInput.value = 'Custom Text';
+            this.namingModal.classList.add('show');
+            requestAnimationFrame(() => {
+                const cancelBtn = this.namingModal.querySelector('.modal-btn.cancel');
+                if (cancelBtn) cancelBtn.focus();
+            });
+        }
+    }
+
+    async loadFromTextWithTitle(text, title) {
+        this.persistCurrentState();
+        
+        if (!text || text.trim().length < 10) {
+            this.updateStatus('Please enter at least 10 characters of text', 'error');
+            return;
+        }
+        
+        this.loadWordsFromText(text);
+        
+        // Save directly to library with provided title
+        const record = {
+            name: title,
+            data: null,
+            type: 'text',
+            textContent: text,
+            wordCount: this.words.length || 0,
+            dateAdded: new Date(),
+            lastRead: new Date(),
+            readingProgress: 0,
+            lastWordIndex: 0,
+            lastReadMarkerIndex: 0,
+            bookmarks: []
+        };
+        
+        try {
+            const textId = await new Promise((resolve, reject) => {
+                const transaction = this.db.transaction(['pdfs'], 'readwrite');
+                const store = transaction.objectStore('pdfs');
+                const request = store.add(record);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+            
+            this.currentPDF = null;
+            this.currentPDFName = title;
+            this.currentPDFId = textId;
+            this.bookmarks = [];
+            
+            this.showPDFTitle(title);
+            this.wordDisplay.style.cursor = 'default';
+            this.wordDisplay.onclick = null;
+            
+            this.updateStatus(`Loaded "${title}"`);
+            this.enableControls(true);
+            this.renderSearchTicks();
+            this.renderLastReadTick();
+            this.renderBookmarkTicks();
+            this.renderBookmarkList();
+            this.previewCurrentWord();
+            
+            // Refresh library to show highlight immediately
+            this.openLibrary();
+        } catch (error) {
+            console.error('Error saving text to library:', error);
+            this.updateStatus('Error saving to library', 'error');
+        }
+    }
+
+    loadWordsFromText(text) {
+        const rawTokens = text
+            .split(/\s+/)
+            .map(t => t.trim())
+            .filter(t => t.length > 0);
+
+        this.words = [];
+        this.wordPauseMultipliers = [];
+        this.wordPageNumbers = [];
+        this.currentWordIndex = 0;
+        this.searchQuery = '';
+        this.searchResults = [];
+        this.currentSearchResultIndex = -1;
+        this.searchableWords = [];
+        this.clearSearchPreview();
+        if (this.pdfSearchInput) this.pdfSearchInput.value = '';
+        this.setPdfSearchOpen(false);
+        localStorage.removeItem(this.searchCacheKey);
+
+        for (const token of rawTokens) {
+            if (this.shouldKeepReaderToken(token)) {
+                this.words.push(token);
+                this.wordPauseMultipliers.push(this.getTokenPauseMultiplier(token));
+                this.wordPageNumbers.push(1);
+            }
+        }
+
+        this.currentPDFPageCount = 1;
+        this.buildSearchIndex();
+    }
+
+    async saveUrlToLibrary(name) {
+        const urlData = this._tempUrlData;
+        if (!urlData) return null;
+
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['pdfs'], 'readwrite');
+            const store = transaction.objectStore('pdfs');
+
+            const record = {
+                name: name,
+                data: null,
+                type: 'url',
+                sourceUrl: urlData.url,
+                textContent: urlData.text,
+                wordCount: this.words.length || 0,
+                dateAdded: new Date(),
+                lastRead: new Date(),
+                readingProgress: 0,
+                lastWordIndex: 0,
+                lastReadMarkerIndex: 0,
+                bookmarks: []
+            };
+
+            const request = store.add(record);
+            request.onsuccess = () => {
+                this.updateStatus(`"${name}" saved to library`);
+                this.openLibrary();
+                resolve(request.result);
+            };
+            request.onerror = () => {
+                this.updateStatus('Error saving to library', 'error');
+                reject(request.error);
+            };
+        }).catch((error) => {
+            console.error('Error saving URL to library:', error);
+            this.updateStatus('Error saving to library', 'error');
+            throw error;
+        });
+    }
+
+    async saveTextToLibrary(name) {
+        const textData = this._tempTextData;
+        if (!textData) return null;
+
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['pdfs'], 'readwrite');
+            const store = transaction.objectStore('pdfs');
+
+            const record = {
+                name: name,
+                data: null,
+                type: 'text',
+                textContent: textData.text,
+                wordCount: this.words.length || 0,
+                dateAdded: new Date(),
+                lastRead: new Date(),
+                readingProgress: 0,
+                lastWordIndex: 0,
+                lastReadMarkerIndex: 0,
+                bookmarks: []
+            };
+
+            const request = store.add(record);
+            request.onsuccess = () => {
+                this.updateStatus(`"${name}" saved to library`);
+                this.openLibrary();
+                resolve(request.result);
+            };
+            request.onerror = () => {
+                this.updateStatus('Error saving to library', 'error');
+                reject(request.error);
+            };
+        }).catch((error) => {
+            console.error('Error saving text to library:', error);
+            this.updateStatus('Error saving to library', 'error');
+            throw error;
+        });
+    }
+
     showNamingModal() {
         if (this.namingModal) {
             // Set default name (remove .pdf extension and replace underscores with spaces)
@@ -1132,7 +1448,7 @@ class PDFWordReader {
         if (!name) {
             const result = await this.showCustomModal(
                 'Invalid Name',
-                'Please enter a name for your PDF.',
+                'Please enter a name.',
                 false,
                 '',
                 'OK',
@@ -1147,28 +1463,72 @@ class PDFWordReader {
         // Close modal
         this.closeNamingModal();
 
-        // Save to library with the given name
-        const pdfId = await this.saveToLibraryWithName(name);
+        if (this._tempUrlData) {
+            // URL article flow — words are already loaded
+            const articleId = await this.saveUrlToLibrary(name);
+            this.currentPDF = null;
+            this.currentPDFName = name;
+            this.currentPDFId = articleId;
+            this.bookmarks = [];
+            this._tempUrlData = null;
 
-        // Load the PDF for reading
-        await this.loadPDFFromArrayBuffer(this.tempPDF);
-        this.currentPDF = this.tempPDF;
-        this.currentPDFName = name;
-        this.currentPDFId = pdfId;
-        this.bookmarks = [];
+            this.showPDFTitle(name);
+            this.wordDisplay.style.cursor = 'default';
+            this.wordDisplay.onclick = null;
 
-        // Show the title in the main display
-        this.showPDFTitle(name);
+            this.updateStatus(`Loaded "${name}"`);
+            this.enableControls(true);
+            this.renderSearchTicks();
+            this.renderLastReadTick();
+            this.renderBookmarkTicks();
+            this.renderBookmarkList();
+            this.previewCurrentWord();
+            // Refresh library to show highlight immediately
+            this.openLibrary();
+        } else if (this._tempTextData) {
+            // Custom text flow — words are already loaded
+            const textId = await this.saveTextToLibrary(name);
+            this.currentPDF = null;
+            this.currentPDFName = name;
+            this.currentPDFId = textId;
+            this.bookmarks = [];
+            this._tempTextData = null;
 
-        // Remove click functionality from word display
-        this.wordDisplay.style.cursor = 'default';
-        this.wordDisplay.onclick = null;
+            this.showPDFTitle(name);
+            this.wordDisplay.style.cursor = 'default';
+            this.wordDisplay.onclick = null;
 
-        this.updateStatus(`Loaded "${name}"`);
-        this.enableControls(true);
-        this.renderBookmarkTicks();
-        this.renderBookmarkList();
-        this.previewCurrentWord();
+            this.updateStatus(`Loaded "${name}"`);
+            this.enableControls(true);
+            this.renderSearchTicks();
+            this.renderLastReadTick();
+            this.renderBookmarkTicks();
+            this.renderBookmarkList();
+            this.previewCurrentWord();
+            // Refresh library to show highlight immediately
+            this.openLibrary();
+        } else {
+            // PDF flow
+            const pdfId = await this.saveToLibraryWithName(name);
+
+            await this.loadPDFFromArrayBuffer(this.tempPDF);
+            this.currentPDF = this.tempPDF;
+            this.currentPDFName = name;
+            this.currentPDFId = pdfId;
+            this.bookmarks = [];
+
+            this.showPDFTitle(name);
+            this.wordDisplay.style.cursor = 'default';
+            this.wordDisplay.onclick = null;
+
+            this.updateStatus(`Loaded "${name}"`);
+            this.enableControls(true);
+            this.renderBookmarkTicks();
+            this.renderBookmarkList();
+            this.previewCurrentWord();
+            // Refresh library to show highlight immediately
+            this.openLibrary();
+        }
     }
 
     getSafeCurrentWordIndex() {
@@ -1466,7 +1826,8 @@ class PDFWordReader {
     }
 
     hasLoadedPdf() {
-        return !!(this.currentPDF && this.currentPDFName && this.words.length > 0);
+        // URL articles have no currentPDF but have words and currentPDFName
+        return !!(this.currentPDFName && this.words.length > 0);
     }
 
     syncReaderChromeVisibility() {
@@ -2546,7 +2907,8 @@ class PDFWordReader {
 
         visiblePdfs.forEach(pdf => {
             const item = document.createElement('div');
-            item.className = 'library-item';
+            const isCurrentlyLoaded = this.currentPDFId === pdf.id;
+            item.className = 'library-item' + (isCurrentlyLoaded ? ' currently-loaded' : '');
             
             const dateAdded = new Date(pdf.dateAdded).toLocaleDateString();
             const lastRead = pdf.lastRead ? new Date(pdf.lastRead).toLocaleDateString() : 'Never';
@@ -2580,8 +2942,11 @@ class PDFWordReader {
                             </div>
                         </div>
                         <div class="library-item-action-row">
-                            <button class="library-load-btn" aria-label="Load PDF into Read Racer" onclick="event.stopPropagation(); requestLoadFromLibrary(${pdf.id})">Load PDF</button>
-                            <button class="library-open-btn" aria-label="Open PDF in new tab" onclick="event.stopPropagation(); openPdfInNewTab(${pdf.id})">Open PDF</button>
+                            <button class="library-load-btn" aria-label="Load into Read Racer" onclick="event.stopPropagation(); requestLoadFromLibrary(${pdf.id})">${pdf.type === 'url' ? 'Load URL' : pdf.type === 'text' ? 'Load Text' : 'Load PDF'}</button>
+                            ${pdf.type === 'url' && pdf.sourceUrl
+                                ? `<button class="library-open-btn" aria-label="Open source URL" onclick="event.stopPropagation(); window.open('${pdf.sourceUrl.replace(/'/g, "\\'")}', '_blank')">Open URL</button>`
+                                : `<button class="library-open-btn" aria-label="Open PDF in new tab" onclick="event.stopPropagation(); openPdfInNewTab(${pdf.id})">Open PDF</button>`
+                            }
                         </div>
                     </div>
                 </div>
@@ -2603,13 +2968,14 @@ class PDFWordReader {
 
         request.onsuccess = async () => {
             const pdfRecord = request.result;
-            const targetName = pdfRecord?.name || 'this PDF';
+            const targetName = pdfRecord?.name || 'this item';
+            const isUrl = pdfRecord?.type === 'url';
             const confirmed = await this.showCustomModal(
-                'Load Different PDF',
-                `Loading "${targetName}" will replace the PDF currently open in Read Racer.`,
+                isUrl ? 'Load Different Article' : 'Load Different PDF',
+                `Loading "${targetName}" will replace the ${isUrl ? 'article' : 'PDF'} currently open in Read Racer.`,
                 false,
                 '',
-                'Load PDF',
+                isUrl ? 'Load URL' : 'Load PDF',
                 'Cancel'
             );
 
@@ -2648,6 +3014,26 @@ class PDFWordReader {
     }
 
     openCurrentPdfInNewTab() {
+        // For URL articles, open the source URL
+        if (!this.currentPDF && this.currentPDFId) {
+            // Check if this is a URL article and get its source URL
+            const transaction = this.db.transaction(['pdfs'], 'readonly');
+            const store = transaction.objectStore('pdfs');
+            const request = store.get(this.currentPDFId);
+            request.onsuccess = () => {
+                const record = request.result;
+                if (record?.type === 'url' && record?.sourceUrl) {
+                    window.open(record.sourceUrl, '_blank');
+                } else {
+                    this.updateStatus('No PDF loaded', 'error');
+                }
+            };
+            request.onerror = () => {
+                this.updateStatus('No PDF loaded', 'error');
+            };
+            return;
+        }
+
         if (!this.currentPDF) {
             this.updateStatus('No PDF loaded', 'error');
             return;
@@ -2706,8 +3092,23 @@ class PDFWordReader {
                         console.log('Calculated word position from progress:', this.currentWordIndex);
                     }
                     
-                    // Load the PDF
-                    await this.loadPDFFromArrayBuffer(pdfRecord.data);
+                    if (pdfRecord.type === 'url') {
+                        // URL article — load words from stored text
+                        this.loadWordsFromText(pdfRecord.textContent);
+                        this.currentWordIndex = cachedResume?.pdfId === pdfRecord.id
+                            ? (cachedResume.wordIndex || 0)
+                            : (pdfRecord.lastWordIndex || 0);
+                    } else if (pdfRecord.type === 'text') {
+                        // Text content — load words from stored text
+                        this.loadWordsFromText(pdfRecord.textContent);
+                        this.currentWordIndex = cachedResume?.pdfId === pdfRecord.id
+                            ? (cachedResume.wordIndex || 0)
+                            : (pdfRecord.lastWordIndex || 0);
+                    } else {
+                        // PDF — parse binary data
+                        await this.loadPDFFromArrayBuffer(pdfRecord.data);
+                    }
+
                     this.hydrateLastReadMarker(pdfRecord);
                     this.hydrateBookmarks(pdfRecord);
                     this.hydrateSearchState();
@@ -2734,14 +3135,15 @@ class PDFWordReader {
                     this.updateStatus(`Loaded "${pdfRecord.name}" - Ready to read`);
                     this.enableControls(true);
                     
-                    // Note: saveToLibraryBtn was removed - auto-save workflow now
-                    
                     // Close side panel
                     if (window.pdfReader && typeof window.pdfReader.closeSidePanel === 'function') {
                         window.pdfReader.closeSidePanel();
                     }
                     
                     this.updateStatus(`Loaded "${pdfRecord.name}" from library`);
+                    
+                    // Refresh library to show highlight immediately
+                    this.openLibrary();
                 }
             };
             
@@ -2983,7 +3385,24 @@ class PDFWordReader {
 
     openSettings() {
         this.openSidePanel();
-        this.switchTab('settings');
+        // Restore last active tab or default to settings - sync UI without triggering save
+        const lastTab = this.settings.activeTab || 'settings';
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${lastTab}"]`).classList.add('active');
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`${lastTab}Tab`).classList.add('active');
+        // Load content if needed
+        if (lastTab === 'library') {
+            this.openLibrary();
+        } else if (lastTab === 'stats') {
+            this.updateStatsDisplay();
+        }
     }
 
     // Side Panel Management
@@ -3138,6 +3557,10 @@ class PDFWordReader {
             content.classList.remove('active');
         });
         document.getElementById(`${tabName}Tab`).classList.add('active');
+        
+        // Save active tab to settings
+        this.settings.activeTab = tabName;
+        this.saveSettings();
         
         // Load content if needed
         if (tabName === 'library') {
@@ -3639,4 +4062,54 @@ function changeFont(fontFamily) {
 
 function updateCenterColor(color) {
     window.pdfReader.setCenterColor(color);
+}
+
+function openUrlModal() {
+    const modal = document.getElementById('urlModal');
+    const input = document.getElementById('urlInput');
+    if (input) input.value = '';
+    modal.classList.add('show');
+    requestAnimationFrame(() => { if (input) input.focus(); });
+}
+
+function closeUrlModal() {
+    const modal = document.getElementById('urlModal');
+    modal.classList.remove('show');
+}
+
+function confirmLoadUrl() {
+    const input = document.getElementById('urlInput');
+    const url = (input ? input.value : '').trim();
+    if (!url) return;
+    closeUrlModal();
+    window.pdfReader.loadFromURL(url);
+}
+
+function openTextModal() {
+    const modal = document.getElementById('textModal');
+    const textarea = document.getElementById('textInput');
+    if (textarea) textarea.value = '';
+    modal.classList.add('show');
+    requestAnimationFrame(() => { if (textarea) textarea.focus(); });
+}
+
+function closeTextModal() {
+    const modal = document.getElementById('textModal');
+    modal.classList.remove('show');
+}
+
+function confirmLoadText() {
+    const titleInput = document.getElementById('textTitleInput');
+    const textarea = document.getElementById('textInput');
+    const title = (titleInput ? titleInput.value : '').trim();
+    const text = (textarea ? textarea.value : '').trim();
+    
+    if (!text || text.length < 10) {
+        window.pdfReader.updateStatus('Please enter at least 10 characters of text', 'error');
+        return;
+    }
+    
+    const finalTitle = title || 'Custom Text';
+    closeTextModal();
+    window.pdfReader.loadFromTextWithTitle(text, finalTitle);
 }

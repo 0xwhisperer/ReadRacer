@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Word Reader</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Readability/0.5.0/Readability.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -144,6 +145,48 @@
         </div>
     </div>
 
+    <!-- URL Input Modal -->
+    <div id="urlModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Load from URL</h3>
+                <button class="modal-close" onclick="closeUrlModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <label for="urlInput">Paste an article URL:</label>
+                <input type="url" id="urlInput" placeholder="https://example.com/article" maxlength="2000" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmLoadUrl();}">
+                <div class="modal-actions">
+                    <button id="urlConfirmBtn" class="modal-btn confirm" onclick="confirmLoadUrl()">Load</button>
+                    <button class="modal-btn cancel" onclick="closeUrlModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Text Input Modal -->
+    <div id="textModal" class="modal readme-modal">
+        <div class="modal-content readme-modal-content">
+            <div class="modal-header">
+                <h3>Load Custom Text</h3>
+                <button class="modal-close" onclick="closeTextModal()">×</button>
+            </div>
+            <div class="modal-body readme-modal-body">
+                <div style="margin-bottom: 16px;">
+                    <label for="textTitleInput" style="display: block; margin-bottom: 6px; color: rgba(255,255,255,0.8);">Title:</label>
+                    <input type="text" id="textTitleInput" placeholder="Enter a title for your text" style="width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 8px; font-family: inherit; font-size: 14px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label for="textInput" style="display: block; margin-bottom: 6px; color: rgba(255,255,255,0.8);">Text Content:</label>
+                    <textarea id="textInput" placeholder="Paste your text here..." style="width: 100%; min-height: 200px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 12px; border-radius: 8px; font-family: inherit; font-size: 14px; line-height: 1.5; resize: vertical; box-sizing: border-box;"></textarea>
+                </div>
+                <div class="modal-actions" style="margin-top: 16px;">
+                    <button class="modal-btn confirm" onclick="confirmLoadText()">Upload Text</button>
+                    <button class="modal-btn cancel" onclick="closeTextModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Center Bottom Controls -->
     <div class="center-controls">
         <button id="back10Btn" class="nav-btn-small nav-btn-skip" disabled title="Go back 10 words">
@@ -184,15 +227,28 @@
             <div id="libraryTab" class="tab-content">
                 <div class="tab-header">
                     <h3>My Library</h3>
-                    <div class="tab-actions">
-                        <label for="libraryPdfFile" class="upload-btn-small">📄 Upload PDF</label>
-                        <input type="file" id="libraryPdfFile" accept=".pdf" hidden>
-                    </div>
+                </div>
+                <div class="library-load-buttons">
+                    <label for="libraryPdfFile" class="upload-btn-small">📄 Upload PDF</label>
+                    <input type="file" id="libraryPdfFile" accept=".pdf" hidden>
+                    <button id="loadTextBtn" class="upload-btn-small" onclick="openTextModal()">📝 Upload Text</button>
+                    <!-- <button id="loadUrlBtn" class="upload-btn-small" onclick="openUrlModal()">🔗 Upload URL</button> -->
                 </div>
                 <div class="library-search-row">
                     <input type="search" id="librarySearch" class="library-search-input" placeholder="Search titles" aria-label="Search library titles">
                 </div>
                 <div id="libraryList" class="library-list"></div>
+                
+                <!-- Bookmarks Section -->
+                <div class="setting-group library-bookmarks-card">
+                    <div class="bookmarks-header">
+                        <h4>Bookmarks</h4>
+                        <button type="button" id="addBookmarkPanelBtn" class="data-management-btn">Add Current Position</button>
+                    </div>
+                    <div id="bookmarkList" class="bookmark-list">
+                        <p class="bookmark-empty">Load a document to use bookmarks.</p>
+                    </div>
+                </div>
             </div>
                 
                 <!-- Settings Tab -->
@@ -317,16 +373,6 @@
                                 <div class="setting-control compact">
                                     <div class="toggle-switch" id="focusMode" onclick="toggleSetting('focusMode')"></div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="setting-group">
-                            <h4>Bookmarks</h4>
-                            <div class="bookmarks-toolbar">
-                                <button type="button" id="addBookmarkPanelBtn" class="data-management-btn">Add Current</button>
-                            </div>
-                            <div id="bookmarkList" class="bookmark-list">
-                                <p class="bookmark-empty">Load a PDF to use bookmarks.</p>
                             </div>
                         </div>
 
