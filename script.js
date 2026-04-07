@@ -162,6 +162,8 @@ class PDFWordReader {
         
         // Naming modal elements
         this.namingModal = document.getElementById('namingModal');
+        this.namingModalTitle = document.getElementById('namingModalTitle');
+        this.namingModalLabel = document.getElementById('namingModalLabel');
         this.pdfNameInput = document.getElementById('pdfNameInput');
         this.readmeModal = document.getElementById('readmeModal');
         this.starfieldCanvas = document.getElementById('starfieldCanvas');
@@ -318,7 +320,7 @@ class PDFWordReader {
                 if (this.sidePanel.classList.contains('open')) {
                     this.closeSidePanel();
                 } else {
-                    this.openSidePanel();
+                    this.openSettings();
                 }
             });
         }
@@ -469,9 +471,23 @@ class PDFWordReader {
                 if (lastViewedPDF) {
                     this.currentPDFId = lastViewedPDF.id;
                     console.log('Loading last viewed PDF:', lastViewedPDF.name);
-                    this.currentPDF = lastViewedPDF.data;
+                    // Only set currentPDF data for actual PDF files
+                    this.currentPDF = lastViewedPDF.type !== 'text' && lastViewedPDF.type !== 'url' ? lastViewedPDF.data : null;
                     this.currentPDFName = lastViewedPDF.name;
 
+                    // Load content first to ensure words array is populated
+                    if (lastViewedPDF.type === 'url') {
+                        // URL article — load words from stored text
+                        this.loadWordsFromText(lastViewedPDF.textContent);
+                    } else if (lastViewedPDF.type === 'text') {
+                        // Text content — load words from stored text
+                        this.loadWordsFromText(lastViewedPDF.textContent);
+                    } else {
+                        // PDF — parse binary data
+                        await this.loadPDFFromArrayBuffer(lastViewedPDF.data);
+                    }
+
+                    // Now restore word index after content is loaded
                     const cachedResume = this.getResumeCache();
                     if (cachedResume && cachedResume.pdfId === lastViewedPDF.id && typeof cachedResume.wordIndex === 'number') {
                         this.currentWordIndex = cachedResume.wordIndex;
@@ -482,24 +498,6 @@ class PDFWordReader {
                     } else {
                         this.currentWordIndex = Math.floor(lastViewedPDF.readingProgress * lastViewedPDF.wordCount / 100);
                         console.log('Restored calculated position:', this.currentWordIndex);
-                    }
-                    
-                    // Load the content
-                    if (lastViewedPDF.type === 'url') {
-                        // URL article — load words from stored text
-                        this.loadWordsFromText(lastViewedPDF.textContent);
-                        this.currentWordIndex = cachedResume?.pdfId === lastViewedPDF.id
-                            ? (cachedResume.wordIndex || 0)
-                            : (lastViewedPDF.lastWordIndex || 0);
-                    } else if (lastViewedPDF.type === 'text') {
-                        // Text content — load words from stored text
-                        this.loadWordsFromText(lastViewedPDF.textContent);
-                        this.currentWordIndex = cachedResume?.pdfId === lastViewedPDF.id
-                            ? (cachedResume.wordIndex || 0)
-                            : (lastViewedPDF.lastWordIndex || 0);
-                    } else {
-                        // PDF — parse binary data
-                        await this.loadPDFFromArrayBuffer(lastViewedPDF.data);
                     }
                     this.hydrateLastReadMarker(lastViewedPDF);
                     this.hydrateBookmarks(lastViewedPDF);
@@ -1124,7 +1122,7 @@ class PDFWordReader {
             
         } catch (error) {
             console.error('Error loading PDF:', error);
-            this.updateStatus('Error loading PDF. Please try another file.', 'error');
+            this.updateStatus('Error loading file. Please try another file.', 'error');
             this.enableControls(false);
         }
     }
@@ -1221,6 +1219,9 @@ class PDFWordReader {
             if (this.namingModal) {
                 let defaultName = title.replace(/_/g, ' ').trim();
                 this.pdfNameInput.value = defaultName;
+                // Set URL-specific title and label
+                if (this.namingModalTitle) this.namingModalTitle.textContent = 'Name Your Article';
+                if (this.namingModalLabel) this.namingModalLabel.textContent = 'Enter a name for this article:';
                 this.namingModal.classList.add('show');
                 requestAnimationFrame(() => {
                     const cancelBtn = this.namingModal.querySelector('.modal-btn.cancel');
@@ -1252,6 +1253,9 @@ class PDFWordReader {
         // Show naming modal
         if (this.namingModal) {
             this.pdfNameInput.value = 'Custom Text';
+            // Set text-specific title and label
+            if (this.namingModalTitle) this.namingModalTitle.textContent = 'Name Your Text';
+            if (this.namingModalLabel) this.namingModalLabel.textContent = 'Enter a name for this text:';
             this.namingModal.classList.add('show');
             requestAnimationFrame(() => {
                 const cancelBtn = this.namingModal.querySelector('.modal-btn.cancel');
@@ -1431,6 +1435,22 @@ class PDFWordReader {
 
     showNamingModal() {
         if (this.namingModal) {
+            // Determine the type and set appropriate title/label
+            let title = 'Name Your PDF';
+            let label = 'Enter a name for this PDF:';
+            
+            if (this._tempUrlData) {
+                title = 'Name Your Article';
+                label = 'Enter a name for this article:';
+            } else if (this._tempTextData) {
+                title = 'Name Your Text';
+                label = 'Enter a name for this text:';
+            }
+            
+            // Update modal title and label
+            if (this.namingModalTitle) this.namingModalTitle.textContent = title;
+            if (this.namingModalLabel) this.namingModalLabel.textContent = label;
+            
             // Set default name (remove .pdf extension and replace underscores with spaces)
             let defaultName = this.tempPDFName.replace(/\.pdf$/i, '');
             defaultName = defaultName.replace(/_/g, ' ');
@@ -2924,7 +2944,7 @@ class PDFWordReader {
                         <button class="library-item-title-button" onclick="event.stopPropagation(); renameFromLibrary(${pdf.id})">
                             <span class="library-item-title">${this.escapeHtml(pdf.name)}</span>
                         </button>
-                        <button class="library-delete-btn" aria-label="Delete PDF" onclick="event.stopPropagation(); deleteFromLibrary(${pdf.id})">×</button>
+                        <button class="library-delete-btn" aria-label="Delete item" onclick="event.stopPropagation(); deleteFromLibrary(${pdf.id})">×</button>
                     </div>
                     <div class="library-item-info">
                         <div class="library-item-meta">
@@ -2945,6 +2965,8 @@ class PDFWordReader {
                             <button class="library-load-btn" aria-label="Load into Read Racer" onclick="event.stopPropagation(); requestLoadFromLibrary(${pdf.id})">${pdf.type === 'url' ? 'Load URL' : pdf.type === 'text' ? 'Load Text' : 'Load PDF'}</button>
                             ${pdf.type === 'url' && pdf.sourceUrl
                                 ? `<button class="library-open-btn" aria-label="Open source URL" onclick="event.stopPropagation(); window.open('${pdf.sourceUrl.replace(/'/g, "\\'")}', '_blank')">Open URL</button>`
+                                : pdf.type === 'text'
+                                ? `<button class="library-open-btn" aria-label="View text content" onclick="event.stopPropagation(); viewTextContent(${pdf.id})">View Text</button>`
                                 : `<button class="library-open-btn" aria-label="Open PDF in new tab" onclick="event.stopPropagation(); openPdfInNewTab(${pdf.id})">Open PDF</button>`
                             }
                         </div>
@@ -2969,13 +2991,27 @@ class PDFWordReader {
         request.onsuccess = async () => {
             const pdfRecord = request.result;
             const targetName = pdfRecord?.name || 'this item';
-            const isUrl = pdfRecord?.type === 'url';
+            const itemType = pdfRecord?.type || 'pdf';
+            let modalTitle = 'Load Different PDF';
+            let modalMessage = `Loading "${targetName}" will replace the PDF currently open in Read Racer.`;
+            let confirmText = 'Load PDF';
+            
+            if (itemType === 'url') {
+                modalTitle = 'Load Different Article';
+                modalMessage = `Loading "${targetName}" will replace the article currently open in Read Racer.`;
+                confirmText = 'Load URL';
+            } else if (itemType === 'text') {
+                modalTitle = 'Load Different Text';
+                modalMessage = `Loading "${targetName}" will replace the text currently open in Read Racer.`;
+                confirmText = 'Load Text';
+            }
+            
             const confirmed = await this.showCustomModal(
-                isUrl ? 'Load Different Article' : 'Load Different PDF',
-                `Loading "${targetName}" will replace the ${isUrl ? 'article' : 'PDF'} currently open in Read Racer.`,
+                modalTitle,
+                modalMessage,
                 false,
                 '',
-                isUrl ? 'Load URL' : 'Load PDF',
+                confirmText,
                 'Cancel'
             );
 
@@ -2989,6 +3025,103 @@ class PDFWordReader {
         };
     }
 
+    async viewTextContent(id) {
+        try {
+            const transaction = this.db.transaction(['pdfs'], 'readonly');
+            const store = transaction.objectStore('pdfs');
+            const request = store.get(id);
+
+            request.onsuccess = () => {
+                const textRecord = request.result;
+                if (!textRecord?.textContent) {
+                    this.updateStatus('Unable to view text content', 'error');
+                    return;
+                }
+                
+                // Try to create a new window, with fallback for popup blockers
+                const newWindow = this.tryOpenWindowFallback();
+                if (newWindow) {
+                    newWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>${this.escapeHtml(textRecord.name)}</title>
+                            <style>
+                                body { 
+                                    font-family: Arial, sans-serif; 
+                                    line-height: 1.6; 
+                                    max-width: 800px; 
+                                    margin: 40px auto; 
+                                    padding: 20px;
+                                    background: #fff;
+                                    color: #333;
+                                }
+                                pre { 
+                                    white-space: pre-wrap; 
+                                    word-wrap: break-word;
+                                    background: #f5f5f5;
+                                    padding: 20px;
+                                    border-radius: 8px;
+                                }
+                                .fallback-notice {
+                                    background: #fff3cd;
+                                    border: 1px solid #ffeaa7;
+                                    border-radius: 4px;
+                                    padding: 12px;
+                                    margin-bottom: 20px;
+                                    color: #856404;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            ${newWindow === window ? '<div class="fallback-notice">Popup blocked - content displayed in current tab</div>' : ''}
+                            <h1>${this.escapeHtml(textRecord.name)}</h1>
+                            <pre>${this.escapeHtml(textRecord.textContent)}</pre>
+                        </body>
+                        </html>
+                    `);
+                    newWindow.document.close();
+                } else {
+                    this.updateStatus('Unable to open new window', 'error');
+                }
+            };
+
+            request.onerror = () => {
+                this.updateStatus('Unable to view text content', 'error');
+            };
+        } catch (error) {
+            console.error('Error viewing text content:', error);
+            this.updateStatus('Unable to view text content', 'error');
+        }
+    }
+
+    tryOpenWindowFallback() {
+        // Try to open a new window first
+        let newWindow = window.open('', '_blank');
+        
+        // If popup blocker blocked it, try with a small delay
+        if (!newWindow || newWindow.closed) {
+            setTimeout(() => {
+                newWindow = window.open('', '_blank');
+            }, 100);
+        }
+        
+        // If still blocked, use current window as fallback
+        if (!newWindow || newWindow.closed) {
+            // Create a modal overlay in current window instead
+            this.showTextContentModal();
+            return window; // Return current window for content writing
+        }
+        
+        return newWindow;
+    }
+
+    showTextContentModal() {
+        // This would be implemented to show text in a modal overlay
+        // For now, just show an error message
+        this.updateStatus('Popup blocker detected. Please allow popups for this site.', 'error');
+    }
+
     async openPdfInNewTab(id) {
         try {
             const transaction = this.db.transaction(['pdfs'], 'readonly');
@@ -2998,18 +3131,18 @@ class PDFWordReader {
             request.onsuccess = () => {
                 const pdfRecord = request.result;
                 if (!pdfRecord?.data) {
-                    this.updateStatus('Unable to open PDF', 'error');
+                    this.updateStatus('Unable to open item', 'error');
                     return;
                 }
                 this.openPdfDataInNewTab(pdfRecord.data);
             };
 
             request.onerror = () => {
-                this.updateStatus('Unable to open PDF', 'error');
+                this.updateStatus('Unable to open item', 'error');
             };
         } catch (error) {
-            console.error('Error opening PDF in new tab:', error);
-            this.updateStatus('Unable to open PDF', 'error');
+            console.error('Error opening item in new tab:', error);
+            this.updateStatus('Unable to open item', 'error');
         }
     }
 
@@ -3048,8 +3181,8 @@ class PDFWordReader {
             }
             window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
         } catch (error) {
-            console.error('Error opening current PDF in new tab:', error);
-            this.updateStatus('Unable to open PDF', 'error');
+            console.error('Error opening current item in new tab:', error);
+            this.updateStatus('Unable to open item', 'error');
         }
     }
 
@@ -3080,6 +3213,19 @@ class PDFWordReader {
                     this.currentPDF = pdfRecord.data;
                     this.currentPDFName = pdfRecord.name;
 
+                    // Load content first to ensure words array is populated
+                    if (pdfRecord.type === 'url') {
+                        // URL article — load words from stored text
+                        this.loadWordsFromText(pdfRecord.textContent);
+                    } else if (pdfRecord.type === 'text') {
+                        // Text content — load words from stored text
+                        this.loadWordsFromText(pdfRecord.textContent);
+                    } else {
+                        // PDF — parse binary data
+                        await this.loadPDFFromArrayBuffer(pdfRecord.data);
+                    }
+
+                    // Now restore word index after content is loaded
                     const cachedResume = this.getResumeCache();
                     if (cachedResume && cachedResume.pdfId === pdfRecord.id && typeof cachedResume.wordIndex === 'number') {
                         this.currentWordIndex = cachedResume.wordIndex;
@@ -3090,23 +3236,6 @@ class PDFWordReader {
                     } else {
                         this.currentWordIndex = Math.floor(pdfRecord.readingProgress * pdfRecord.wordCount / 100);
                         console.log('Calculated word position from progress:', this.currentWordIndex);
-                    }
-                    
-                    if (pdfRecord.type === 'url') {
-                        // URL article — load words from stored text
-                        this.loadWordsFromText(pdfRecord.textContent);
-                        this.currentWordIndex = cachedResume?.pdfId === pdfRecord.id
-                            ? (cachedResume.wordIndex || 0)
-                            : (pdfRecord.lastWordIndex || 0);
-                    } else if (pdfRecord.type === 'text') {
-                        // Text content — load words from stored text
-                        this.loadWordsFromText(pdfRecord.textContent);
-                        this.currentWordIndex = cachedResume?.pdfId === pdfRecord.id
-                            ? (cachedResume.wordIndex || 0)
-                            : (pdfRecord.lastWordIndex || 0);
-                    } else {
-                        // PDF — parse binary data
-                        await this.loadPDFFromArrayBuffer(pdfRecord.data);
                     }
 
                     this.hydrateLastReadMarker(pdfRecord);
@@ -3188,7 +3317,7 @@ class PDFWordReader {
             
         } catch (error) {
             console.error('Error loading PDF:', error);
-            this.updateStatus('Error loading PDF', 'error');
+            this.updateStatus('Error loading item', 'error');
         }
     }
 
@@ -3203,7 +3332,7 @@ class PDFWordReader {
                 const pdfRecord = request.result;
                 if (pdfRecord) {
                     const confirmed = await this.showCustomModal(
-                        'Delete PDF',
+                        'Delete Item',
                         `Are you sure you want to delete "${pdfRecord.name}"? This action cannot be undone.`,
                         false,
                         '',
@@ -3220,7 +3349,7 @@ class PDFWordReader {
             
         } catch (error) {
             console.error('Error deleting PDF:', error);
-            this.updateStatus('Error deleting PDF', 'error');
+            this.updateStatus('Error deleting item', 'error');
         }
     }
 
@@ -3256,8 +3385,8 @@ class PDFWordReader {
                 const pdfRecord = request.result;
                 if (pdfRecord) {
                     const newName = await this.showCustomModal(
-                        'Rename PDF',
-                        'Enter a new name for this PDF:',
+                        'Rename Item',
+                        'Enter a new name for this item:',
                         true,
                         pdfRecord.name,
                         'Rename',
@@ -3272,7 +3401,7 @@ class PDFWordReader {
             
         } catch (error) {
             console.error('Error renaming PDF:', error);
-            this.updateStatus('Error renaming PDF', 'error');
+            this.updateStatus('Error renaming item', 'error');
         }
     }
 
@@ -3385,24 +3514,9 @@ class PDFWordReader {
 
     openSettings() {
         this.openSidePanel();
-        // Restore last active tab or default to settings - sync UI without triggering save
+        // Restore last active tab or default to settings - use switchTab to ensure persistence
         const lastTab = this.settings.activeTab || 'settings';
-        // Update tab buttons
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-tab="${lastTab}"]`).classList.add('active');
-        // Update tab content
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        document.getElementById(`${lastTab}Tab`).classList.add('active');
-        // Load content if needed
-        if (lastTab === 'library') {
-            this.openLibrary();
-        } else if (lastTab === 'stats') {
-            this.updateStatsDisplay();
-        }
+        this.switchTab(lastTab);
     }
 
     // Side Panel Management
@@ -3543,6 +3657,8 @@ class PDFWordReader {
         if (this.display) {
             this.display.classList.remove('starfield-active');
         }
+        // Clear stars array to prevent memory leaks
+        this.stars = [];
     }
 
     switchTab(tabName) {

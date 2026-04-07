@@ -119,11 +119,11 @@
     <div id="namingModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Name Your PDF</h3>
+                <h3 id="namingModalTitle">Name Your PDF</h3>
                 <button class="modal-close" onclick="closeNamingModal()">×</button>
             </div>
             <div class="modal-body">
-                <label for="pdfNameInput">Enter a name for this PDF:</label>
+                <label id="namingModalLabel" for="pdfNameInput">Enter a name for this PDF:</label>
                 <input type="text" id="pdfNameInput" placeholder="My Document" maxlength="100">
                 <div class="modal-actions">
                     <button class="modal-btn confirm" onclick="confirmPdfName()">Save & Load</button>
