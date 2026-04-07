@@ -63,7 +63,7 @@ class PDFWordReader {
         this.centerPauseBtn = document.getElementById('centerPauseBtn');
         // Note: saveToLibraryBtn was removed - auto-save workflow now
         this.wordDisplay = document.getElementById('wordDisplay');
-        this.currentPDFTitle = document.getElementById('currentPDFTitle');
+        this.pdfTitle = document.getElementById('pdfTitle');
         this.contextPreview = document.getElementById('contextPreview');
         this.statusDisplay = document.getElementById('status');
         this.progressDisplay = document.getElementById('progress');
@@ -389,16 +389,17 @@ class PDFWordReader {
     }
 
     showPDFTitle(title) {
-        if (this.currentPDFTitle) {
+        if (this.pdfTitle) {
             // Clean up title by replacing underscores with spaces
             const cleanTitle = title.replace(/_/g, ' ');
-            this.currentPDFTitle.textContent = cleanTitle;
+            this.pdfTitle.textContent = cleanTitle;
+            this.pdfTitle.style.display = 'block';
         }
     }
 
     hidePDFTitle() {
-        if (this.currentPDFTitle) {
-            this.currentPDFTitle.textContent = '';
+        if (this.pdfTitle) {
+            this.pdfTitle.style.display = 'none';
         }
     }
 
