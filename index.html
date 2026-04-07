@@ -97,11 +97,21 @@
 
         #wordDisplay {
             font-size: 48px;
-            font-family: 'Courier New', monospace;
-            color: #fff;
+            font-weight: bold;
             text-align: center;
-            position: relative;
+            color: #fff;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
             letter-spacing: 0.1em;
+        }
+
+        #wordDisplay[style*="cursor: pointer"] {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        #wordDisplay[style*="cursor: pointer"]:hover {
+            color: #0080FF;
+            transform: scale(1.02);
         }
 
         #playbackControls {
@@ -1536,12 +1546,12 @@
     </div>
 
     <div id="display">
-        <div id="contextPreview"></div>
-        <div id="wordDisplay">Upload a PDF to begin.</div>
-        <div id="progressBar">
-            <div id="progressFill"></div>
+            <div id="contextPreview"></div>
+            <div id="wordDisplay" onclick="document.getElementById('pdfFile').click()" style="cursor: pointer;">Upload a PDF to begin.</div>
+            <div id="progressBar">
+                <div id="progressFill"></div>
+            </div>
         </div>
-    </div>
     <div class="control-row">
         <button id="back10Btn" class="nav-btn-small" disabled>←10</button>
         <button id="back1Btn" class="nav-btn-small" disabled>←</button>

@@ -336,6 +336,10 @@ class PDFWordReader {
         // Show the title in the main display
         this.showPDFTitle(name);
 
+        // Remove click functionality from word display
+        this.wordDisplay.style.cursor = 'default';
+        this.wordDisplay.onclick = null;
+
         this.updateStatus(`Loaded "${name}"`);
         this.enableControls(true);
     }
@@ -444,33 +448,28 @@ class PDFWordReader {
     }
 
     reset() {
-        clearTimeout(this.displayTimeout);
+        this.pause();
         this.isPlaying = false;
         this.isPaused = false;
         this.currentWordIndex = 0;
         
-        // Handle both old and new button layouts
-        if (this.startBtn) this.startBtn.disabled = false;
+        if (this.playBtn) this.playBtn.disabled = false;
+        if (this.centerPauseBtn) this.centerPauseBtn.disabled = true;
         if (this.pauseBtn) {
             this.pauseBtn.disabled = true;
             this.pauseBtn.textContent = 'Pause';
         }
+        if (this.startBtn) this.startBtn.disabled = false;
         if (this.resetBtn) this.resetBtn.disabled = false;
-        if (this.playBtn) this.playBtn.disabled = false;
-        if (this.centerPauseBtn) this.centerPauseBtn.disabled = true;
         
-        // Disable navigation controls if they exist
-        if (this.back10Btn) this.back10Btn.disabled = true;
-        if (this.back1Btn) this.back1Btn.disabled = true;
-        if (this.forward1Btn) this.forward1Btn.disabled = true;
-        if (this.forward10Btn) this.forward10Btn.disabled = true;
+        // Show upload prompt with click functionality
+        this.wordDisplay.textContent = 'Upload a PDF to begin.';
+        this.wordDisplay.style.cursor = 'pointer';
+        this.wordDisplay.onclick = () => {
+            if (this.fileInput) this.fileInput.click();
+        };
         
-        if (this.words.length > 0) {
-            this.displayWord(this.words[0]);
-        } else {
-            this.wordDisplay.textContent = 'Upload a PDF to begin.';
-        }
-        
+        this.hidePDFTitle();
         this.updateStatus('Ready to start');
         this.updateProgress();
     }
@@ -781,6 +780,10 @@ class PDFWordReader {
                     
                     // Show the title
                     this.showPDFTitle(pdfRecord.name);
+                    
+                    // Remove click functionality from word display
+                    this.wordDisplay.style.cursor = 'default';
+                    this.wordDisplay.onclick = null;
                     
                     // Update last read date
                     this.updateLastRead(id);
