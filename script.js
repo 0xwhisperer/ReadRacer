@@ -63,6 +63,7 @@ class PDFWordReader {
         this.centerPauseBtn = document.getElementById('centerPauseBtn');
         this.saveToLibraryBtn = document.getElementById('saveToLibraryBtn');
         this.wordDisplay = document.getElementById('wordDisplay');
+        this.pdfTitle = document.getElementById('pdfTitle');
         this.contextPreview = document.getElementById('contextPreview');
         this.statusDisplay = document.getElementById('status');
         this.progressDisplay = document.getElementById('progress');
@@ -192,18 +193,6 @@ class PDFWordReader {
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleKeyPress(e));
-        
-        // Close panel when clicking outside
-        document.addEventListener('click', (e) => {
-            if (this.sidePanel && this.sidePanel.classList.contains('open')) {
-                const isClickInsidePanel = this.sidePanel.contains(e.target);
-                const isClickOnMenuToggle = this.menuToggle && this.menuToggle.contains(e.target);
-                
-                if (!isClickInsidePanel && !isClickOnMenuToggle) {
-                    this.closeSidePanel();
-                }
-            }
-        });
     }
 
     // Initialize IndexedDB
@@ -344,6 +333,9 @@ class PDFWordReader {
         this.currentPDF = this.tempPDF;
         this.currentPDFName = name;
 
+        // Show the title in the main display
+        this.showPDFTitle(name);
+
         this.updateStatus(`Loaded "${name}"`);
         this.enableControls(true);
     }
@@ -391,6 +383,19 @@ class PDFWordReader {
         } catch (error) {
             console.error('Error saving to library:', error);
             this.updateStatus('Error saving to library');
+        }
+    }
+
+    showPDFTitle(title) {
+        if (this.pdfTitle) {
+            this.pdfTitle.textContent = title;
+            this.pdfTitle.style.display = 'block';
+        }
+    }
+
+    hidePDFTitle() {
+        if (this.pdfTitle) {
+            this.pdfTitle.style.display = 'none';
         }
     }
 
@@ -774,6 +779,9 @@ class PDFWordReader {
                     
                     // Load the PDF
                     await this.loadPDFFromArrayBuffer(pdfRecord.data);
+                    
+                    // Show the title
+                    this.showPDFTitle(pdfRecord.name);
                     
                     // Update last read date
                     this.updateLastRead(id);
@@ -1183,6 +1191,18 @@ class PDFWordReader {
 // Initialize the application when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     window.pdfReader = new PDFWordReader();
+    
+    // Add click-outside listener after class is fully initialized
+    document.addEventListener('click', (e) => {
+        if (window.pdfReader.sidePanel && window.pdfReader.sidePanel.classList.contains('open')) {
+            const isClickInsidePanel = window.pdfReader.sidePanel.contains(e.target);
+            const isClickOnMenuToggle = window.pdfReader.menuToggle && window.pdfReader.menuToggle.contains(e.target);
+            
+            if (!isClickInsidePanel && !isClickOnMenuToggle) {
+                window.pdfReader.closeSidePanel();
+            }
+        }
+    });
 });
 
 // Global functions for modals
