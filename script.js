@@ -350,7 +350,14 @@ class PDFWordReader {
 
     displayWord(word) {
         // Word length compensation
-        let delay = parseInt(this.wordDelayInput.value);
+        let delay;
+        if (this.wordDelayInput) {
+            delay = parseInt(this.wordDelayInput.value);
+        } else {
+            // Convert WPM to milliseconds per word
+            const wpm = parseInt(this.wpmInput.value) || 300;
+            delay = Math.round(60000 / wpm);
+        }
         if (this.settings.wordLengthComp) {
             const avgWordLength = 5;
             const lengthFactor = word.length / avgWordLength;
@@ -419,7 +426,16 @@ class PDFWordReader {
         this.currentWordIndex++;
 
         if (this.isPlaying && !this.isPaused) {
-            const delay = parseInt(this.wordDelayInput.value);
+            // Calculate delay from WPM if wordDelayInput doesn't exist
+            let delay;
+            if (this.wordDelayInput) {
+                delay = parseInt(this.wordDelayInput.value);
+            } else {
+                // Convert WPM to milliseconds per word
+                const wpm = parseInt(this.wpmInput.value) || 300;
+                delay = Math.round(60000 / wpm);
+            }
+            
             this.displayTimeout = setTimeout(() => this.displayNextWord(), delay);
         }
     }
@@ -431,7 +447,9 @@ class PDFWordReader {
     updateWPM(wpm) {
         // Convert WPM to milliseconds per word
         const msPerWord = Math.round(60000 / parseInt(wpm));
-        this.wordDelayInput.value = msPerWord;
+        if (this.wordDelayInput) {
+            this.wordDelayInput.value = msPerWord;
+        }
     }
 
     updateCenterColor(color) {
@@ -854,7 +872,14 @@ class PDFWordReader {
     // Enhanced Word Display
     displayWord(word) {
         // Word length compensation
-        let delay = parseInt(this.wordDelayInput.value);
+        let delay;
+        if (this.wordDelayInput) {
+            delay = parseInt(this.wordDelayInput.value);
+        } else {
+            // Convert WPM to milliseconds per word
+            const wpm = parseInt(this.wpmInput.value) || 300;
+            delay = Math.round(60000 / wpm);
+        }
         if (this.settings.wordLengthComp) {
             const avgWordLength = 5;
             const lengthFactor = word.length / avgWordLength;
