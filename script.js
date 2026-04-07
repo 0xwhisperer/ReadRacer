@@ -281,6 +281,77 @@ class PDFWordReader {
         }
     }
 
+    showNamingModal() {
+        if (this.namingModal) {
+            // Set default name (remove .pdf extension)
+            const defaultName = this.tempPDFName.replace(/\.pdf$/i, '');
+            this.pdfNameInput.value = defaultName;
+            this.pdfNameInput.focus();
+            this.pdfNameInput.select();
+            this.namingModal.classList.add('show');
+        }
+    }
+
+    async confirmPdfName() {
+        const name = this.pdfNameInput.value.trim();
+        if (!name) {
+            alert('Please enter a name for your PDF');
+            return;
+        }
+
+        // Close modal
+        this.closeNamingModal();
+
+        // Save to library with the given name
+        await this.saveToLibraryWithName(name);
+
+        // Load the PDF for reading
+        await this.loadPDFFromArrayBuffer(this.tempPDF);
+        this.currentPDF = this.tempPDF;
+        this.currentPDFName = name;
+
+        this.updateStatus(`Loaded "${name}"`);
+        this.enableControls(true);
+    }
+
+    closeNamingModal() {
+        if (this.namingModal) {
+            this.namingModal.classList.remove('show');
+        }
+    }
+
+    async saveToLibraryWithName(name) {
+        try {
+            const transaction = this.db.transaction(['pdfs'], 'readwrite');
+            const store = transaction.objectStore('pdfs');
+            
+            const pdfRecord = {
+                name: name,
+                data: this.tempPDF,
+                wordCount: this.words.length || 0,
+                dateAdded: new Date(),
+                lastRead: new Date(),
+                readingProgress: 0
+            };
+
+            const request = store.add(pdfRecord);
+            
+            request.onsuccess = () => {
+                this.updateStatus(`"${name}" saved to library`);
+                // Refresh library display
+                this.openLibrary();
+            };
+            
+            request.onerror = () => {
+                this.updateStatus('Error saving to library');
+            };
+            
+        } catch (error) {
+            console.error('Error saving to library:', error);
+            this.updateStatus('Error saving to library');
+        }
+    }
+
     start() {
         if (this.words.length === 0) return;
         
@@ -351,7 +422,7 @@ class PDFWordReader {
         if (this.words.length > 0) {
             this.displayWord(this.words[0]);
         } else {
-            this.wordDisplay.textContent = 'Upload a PDF to begin';
+            this.wordDisplay.textContent = 'Upload a PDF to begin.';
         }
         
         this.updateStatus('Ready to start');
