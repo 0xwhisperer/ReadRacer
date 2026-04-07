@@ -1,4 +1,4 @@
-# PDF Word Reader
+# ReadRacer - PDF Word Reader
 
 A web application that displays PDF content one word at a time with customizable timing settings.
 
@@ -10,9 +10,18 @@ A web application that displays PDF content one word at a time with customizable
 - **Monospace Font**: Uses Courier New for consistent character spacing
 - **Center Anchoring**: Maintains consistent center positioning for all words
 - **Customizable Timing**: Adjustable word delay (50ms - 5000ms)
+- **WPM Control**: Words per minute setting (50-1000 WPM)
 - **Font Size Control**: Adjustable font size (12px - 120px)
+- **Color Customization**: Center character color options with swatch support
 - **Playback Controls**: Start, Pause/Resume, and Reset functionality
+- **Keyboard Shortcuts**: Escape, Enter, and Spacebar for playback control
 - **Progress Tracking**: Shows current word position and completion percentage
+- **Local Library**: IndexedDB storage for PDFs and reading progress
+- **Privacy-Focused**: All processing happens locally in your browser
+
+## Live Demo
+
+🚀 **Try it now:** https://0xwhisperer.github.io/ReadRacer/
 
 ## How to Use
 
