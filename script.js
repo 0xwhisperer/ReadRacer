@@ -598,6 +598,7 @@ class PDFWordReader {
                 </div>
                 <div class="library-item-actions">
                     <button onclick="loadFromLibrary(${pdf.id})">Load</button>
+                    <button onclick="renameFromLibrary(${pdf.id})">Rename</button>
                     <button onclick="deleteFromLibrary(${pdf.id})">Delete</button>
                 </div>
             `;
@@ -713,6 +714,59 @@ class PDFWordReader {
         } catch (error) {
             console.error('Error deleting from library:', error);
             this.updateStatus('Error deleting from library');
+        }
+    }
+
+    async renameFromLibrary(id) {
+        try {
+            const transaction = this.db.transaction(['pdfs'], 'readonly');
+            const store = transaction.objectStore('pdfs');
+            const request = store.get(id);
+            
+            request.onsuccess = async () => {
+                const pdfRecord = request.result;
+                if (pdfRecord) {
+                    const newName = prompt('Enter new name for this PDF:', pdfRecord.name);
+                    if (newName && newName.trim() && newName !== pdfRecord.name) {
+                        await this.updatePdfName(id, newName.trim());
+                    }
+                }
+            };
+            
+        } catch (error) {
+            console.error('Error renaming PDF:', error);
+            this.updateStatus('Error renaming PDF');
+        }
+    }
+
+    async updatePdfName(id, newName) {
+        try {
+            const transaction = this.db.transaction(['pdfs'], 'readwrite');
+            const store = transaction.objectStore('pdfs');
+            
+            // First get the current record
+            const getRequest = store.get(id);
+            getRequest.onsuccess = () => {
+                const pdfRecord = getRequest.result;
+                if (pdfRecord) {
+                    // Update the name
+                    pdfRecord.name = newName;
+                    
+                    // Put it back
+                    const updateRequest = store.put(pdfRecord);
+                    updateRequest.onsuccess = () => {
+                        this.updateStatus(`PDF renamed to "${newName}"`);
+                        this.openLibrary(); // Refresh the library display
+                    };
+                    updateRequest.onerror = () => {
+                        this.updateStatus('Error updating PDF name');
+                    };
+                }
+            };
+            
+        } catch (error) {
+            console.error('Error updating PDF name:', error);
+            this.updateStatus('Error updating PDF name');
         }
     }
 
@@ -980,6 +1034,10 @@ function loadFromLibrary(id) {
 
 function deleteFromLibrary(id) {
     window.pdfReader.deleteFromLibrary(id);
+}
+
+function renameFromLibrary(id) {
+    window.pdfReader.renameFromLibrary(id);
 }
 
 // Global functions for settings

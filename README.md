@@ -1,4 +1,4 @@
-# ReadRacer - PDF Word Reader
+# Read Racer - PDF Word Reader
 
 A web application that displays PDF content one word at a time with customizable timing settings.
 
