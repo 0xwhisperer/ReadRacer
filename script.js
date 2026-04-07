@@ -323,9 +323,7 @@ class PDFWordReader {
             this.notesBtn.addEventListener('click', () => this.openReadmeModal());
         }
         if (this.pdfTitle) {
-            this.pdfTitle.removeAttribute('tabindex');
-            this.pdfTitle.onclick = null;
-            this.pdfTitle.onkeydown = null;
+            this.pdfTitle.addEventListener('click', () => this.openCurrentPdfInNewTab());
         }
         if (this.searchToggleBtn) {
             this.searchToggleBtn.addEventListener('click', (event) => {
@@ -757,12 +755,7 @@ class PDFWordReader {
             const tooltipText = `${bookmark.label}${bookmark.pageNumber ? ` • Pg ${bookmark.pageNumber}` : ''} • ${(bookmark.wordIndex + 1).toLocaleString()} / ${this.words.length.toLocaleString()}`;
             marker.style.left = `${ratio * 100}%`;
             marker.setAttribute('aria-label', `Bookmark ${bookmark.label}`);
-            const showTooltip = () => this.showMarkerHovercard(marker, tooltipText);
-            const hideTooltip = () => this.hideMarkerHovercard();
-            marker.addEventListener('mouseenter', showTooltip);
-            marker.addEventListener('mouseleave', hideTooltip);
-            marker.addEventListener('pointerenter', showTooltip);
-            marker.addEventListener('pointerleave', hideTooltip);
+            this.bindMarkerHoverEvents(marker, tooltipText);
             marker.addEventListener('click', (event) => {
                 event.stopPropagation();
                 this.seekToWordIndex(bookmark.wordIndex);
@@ -771,18 +764,16 @@ class PDFWordReader {
         });
     }
 
-    showMarkerHovercard(target, text) {
-        if (!this.markerHovercard || !target || !text) return;
-        const targetRect = target.getBoundingClientRect();
-        const centerX = targetRect.left + (targetRect.width / 2);
+    showMarkerHovercard(centerX, topY, text) {
+        if (!this.markerHovercard || !text) return;
         this.markerHovercard.textContent = text;
         this.markerHovercard.style.left = `${centerX}px`;
-        this.markerHovercard.style.top = `${Math.max(12, targetRect.top - 12)}px`;
+        this.markerHovercard.style.top = `${Math.max(12, topY)}px`;
         this.markerHovercard.classList.add('visible');
         this.markerHovercard.setAttribute('aria-hidden', 'false');
 
         const hovercardRect = this.markerHovercard.getBoundingClientRect();
-        this.markerHovercard.style.top = `${Math.max(12, targetRect.top - hovercardRect.height - 8)}px`;
+        this.markerHovercard.style.top = `${Math.max(12, topY - hovercardRect.height - 8)}px`;
     }
 
     hideMarkerHovercard() {
@@ -790,6 +781,26 @@ class PDFWordReader {
         this.markerHovercard.textContent = '';
         this.markerHovercard.classList.remove('visible');
         this.markerHovercard.setAttribute('aria-hidden', 'true');
+    }
+
+    bindMarkerHoverEvents(marker, tooltipText) {
+        const showTooltip = () => {
+            const rect = marker.getBoundingClientRect();
+            this.showMarkerHovercard(rect.left + (rect.width / 2), rect.top - 8, tooltipText);
+        };
+
+        const moveTooltip = (event) => {
+            this.showMarkerHovercard(event.clientX, event.clientY - 12, tooltipText);
+        };
+
+        const hideTooltip = () => this.hideMarkerHovercard();
+
+        marker.onmouseenter = showTooltip;
+        marker.onmousemove = moveTooltip;
+        marker.onmouseleave = hideTooltip;
+        marker.onpointerenter = showTooltip;
+        marker.onpointermove = moveTooltip;
+        marker.onpointerleave = hideTooltip;
     }
 
     renderBookmarkList() {
@@ -1427,7 +1438,7 @@ class PDFWordReader {
         if (this.pdfTitle) {
             const cleanTitle = String(title || '').replace(/_/g, ' ').trim();
             this.pdfTitle.textContent = cleanTitle;
-            this.pdfTitle.title = cleanTitle ? 'Open PDF in new tab' : '';
+            this.pdfTitle.removeAttribute('title');
             this.pdfTitle.style.display = cleanTitle && this.settings.showTitle ? 'block' : 'none';
         }
     }
@@ -1832,12 +1843,7 @@ class PDFWordReader {
             const countText = group.items.length > 1 ? ` • ${group.items.length} matches` : '';
             const tooltipText = `${this.searchQuery}${pageText} • ${(first.wordIndex + 1).toLocaleString()} / ${this.words.length.toLocaleString()}${countText}`;
             marker.setAttribute('aria-label', `Search match${pageText}`);
-            const showTooltip = () => this.showMarkerHovercard(marker, tooltipText);
-            const hideTooltip = () => this.hideMarkerHovercard();
-            marker.addEventListener('mouseenter', showTooltip);
-            marker.addEventListener('mouseleave', hideTooltip);
-            marker.addEventListener('pointerenter', showTooltip);
-            marker.addEventListener('pointerleave', hideTooltip);
+            this.bindMarkerHoverEvents(marker, tooltipText);
             marker.addEventListener('click', (event) => {
                 event.stopPropagation();
                 this.currentSearchResultIndex = first.resultIndex;
@@ -1866,10 +1872,7 @@ class PDFWordReader {
         this.lastReadTick.style.left = `${ratio * 100}%`;
         this.lastReadTick.style.display = 'block';
         this.lastReadTick.setAttribute('aria-label', `Furthest reached marker${pageNumber ? ` page ${pageNumber}` : ''}`);
-        this.lastReadTick.onmouseenter = () => this.showMarkerHovercard(this.lastReadTick, tooltipText);
-        this.lastReadTick.onmouseleave = () => this.hideMarkerHovercard();
-        this.lastReadTick.onpointerenter = () => this.showMarkerHovercard(this.lastReadTick, tooltipText);
-        this.lastReadTick.onpointerleave = () => this.hideMarkerHovercard();
+        this.bindMarkerHoverEvents(this.lastReadTick, tooltipText);
     }
 
     clearSearchPreview() {
@@ -2642,7 +2645,13 @@ class PDFWordReader {
         }
 
         try {
-            this.openPdfDataInNewTab(this.currentPDF);
+            const blob = new Blob([this.currentPDF], { type: 'application/pdf' });
+            const objectUrl = URL.createObjectURL(blob);
+            const newTab = window.open(objectUrl, '_blank');
+            if (!newTab) {
+                this.openPdfDataInNewTab(this.currentPDF);
+            }
+            window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
         } catch (error) {
             console.error('Error opening current PDF in new tab:', error);
             this.updateStatus('Unable to open PDF', 'error');
@@ -2735,7 +2744,7 @@ class PDFWordReader {
 
     async loadPDFFromArrayBuffer(arrayBuffer) {
         try {
-            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            const pdf = await pdfjsLib.getDocument(arrayBuffer.slice(0)).promise;
             
             this.words = [];
             this.wordPageNumbers = [];
