@@ -1525,6 +1525,24 @@
         </div>
     </div>
 
+    <!-- Custom Modal -->
+    <div id="customModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Title</h3>
+                <button class="modal-close" onclick="closeCustomModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="modalMessage">Message</p>
+                <input type="text" id="modalInput" style="display: none; width: 100%; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 12px; border-radius: 8px; margin-top: 10px; box-sizing: border-box;">
+                <div class="modal-actions">
+                    <button id="modalCancel" class="modal-btn cancel">Cancel</button>
+                    <button id="modalConfirm" class="modal-btn confirm">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Naming Modal -->
     <div id="namingModal" class="modal">
         <div class="modal-content">

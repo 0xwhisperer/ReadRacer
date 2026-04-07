@@ -192,6 +192,62 @@ class PDFWordReader {
         document.addEventListener('keydown', (e) => this.handleKeyPress(e));
     }
 
+    // Custom Modal System
+    showCustomModal(title, message, showInput = false, defaultValue = '', confirmText = 'Confirm', cancelText = 'Cancel') {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('customModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+            const modalInput = document.getElementById('modalInput');
+            const modalConfirm = document.getElementById('modalConfirm');
+            const modalCancel = document.getElementById('modalCancel');
+            
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalConfirm.textContent = confirmText;
+            modalCancel.textContent = cancelText;
+            
+            if (showInput) {
+                modalInput.style.display = 'block';
+                modalInput.value = defaultValue;
+                modalInput.focus();
+                modalInput.select();
+            } else {
+                modalInput.style.display = 'none';
+            }
+            
+            modal.classList.add('show');
+            
+            const handleConfirm = () => {
+                modal.classList.remove('show');
+                modalConfirm.removeEventListener('click', handleConfirm);
+                modalCancel.removeEventListener('click', handleCancel);
+                modalInput.removeEventListener('keypress', handleKeyPress);
+                resolve(showInput ? modalInput.value.trim() : true);
+            };
+            
+            const handleCancel = () => {
+                modal.classList.remove('show');
+                modalConfirm.removeEventListener('click', handleConfirm);
+                modalCancel.removeEventListener('click', handleCancel);
+                modalInput.removeEventListener('keypress', handleKeyPress);
+                resolve(null);
+            };
+            
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter') {
+                    handleConfirm();
+                } else if (e.key === 'Escape') {
+                    handleCancel();
+                }
+            };
+            
+            modalConfirm.addEventListener('click', handleConfirm);
+            modalCancel.addEventListener('click', handleCancel);
+            modalInput.addEventListener('keypress', handleKeyPress);
+        });
+    }
+
     // Initialize IndexedDB
     async initializeDB() {
         return new Promise((resolve, reject) => {
@@ -316,7 +372,17 @@ class PDFWordReader {
     async confirmPdfName() {
         const name = this.pdfNameInput.value.trim();
         if (!name) {
-            alert('Please enter a name for your PDF');
+            const result = await this.showCustomModal(
+                'Invalid Name',
+                'Please enter a name for your PDF.',
+                false,
+                '',
+                'OK',
+                'Cancel'
+            );
+            if (!result) return;
+            // Re-open naming modal
+            this.showNamingModal();
             return;
         }
 
@@ -835,35 +901,56 @@ class PDFWordReader {
             // Note: saveToLibraryBtn was removed - no longer needed
             
         } catch (error) {
-            console.error('Error loading PDF:', error);
-            this.updateStatus('Error loading PDF');
-        }
-    }
-
-    async updateLastRead(id) {
-        try {
-            const transaction = this.db.transaction(['pdfs'], 'readwrite');
             const store = transaction.objectStore('pdfs');
-            const request = store.get(id);
+            const request = store.delete(id);
             
             request.onsuccess = () => {
-                const pdf = request.result;
-                if (pdf) {
-                    pdf.lastRead = new Date();
-                    const updateRequest = store.put(pdf);
-                }
+                this.updateStatus('PDF deleted from library');
+                this.openLibrary(); // Refresh the library display
+            };
+            
+            request.onerror = () => {
+                this.updateStatus('Error deleting from library');
             };
             
         } catch (error) {
-            console.error('Error updating last read:', error);
+            console.error('Error deleting from library:', error);
+            this.updateStatus('Error deleting from library');
         }
     }
 
     async deleteFromLibrary(id) {
-        if (!confirm('Are you sure you want to delete this PDF from your library?')) {
-            return;
+        try {
+            // Get PDF info for confirmation
+            const transaction = this.db.transaction(['pdfs'], 'readonly');
+            const store = transaction.objectStore('pdfs');
+            const request = store.get(id);
+            
+            request.onsuccess = async () => {
+                const pdfRecord = request.result;
+                if (pdfRecord) {
+                    const confirmed = await this.showCustomModal(
+                        'Delete PDF',
+                        `Are you sure you want to delete "${pdfRecord.name}"? This action cannot be undone.`,
+                        false,
+                        '',
+                        'Delete',
+                        'Cancel'
+                    );
+                    
+                    if (confirmed) {
+                        await this.deletePdf(id);
+                    }
+                }
+            };
+            
+        } catch (error) {
+            console.error('Error deleting PDF:', error);
+            this.updateStatus('Error deleting PDF');
         }
+    }
 
+    async deletePdf(id) {
         try {
             const transaction = this.db.transaction(['pdfs'], 'readwrite');
             const store = transaction.objectStore('pdfs');
@@ -893,7 +980,15 @@ class PDFWordReader {
             request.onsuccess = async () => {
                 const pdfRecord = request.result;
                 if (pdfRecord) {
-                    const newName = prompt('Enter new name for this PDF:', pdfRecord.name);
+                    const newName = await this.showCustomModal(
+                        'Rename PDF',
+                        'Enter a new name for this PDF:',
+                        true,
+                        pdfRecord.name,
+                        'Rename',
+                        'Cancel'
+                    );
+                    
                     if (newName && newName.trim() && newName !== pdfRecord.name) {
                         await this.updatePdfName(id, newName.trim());
                     }
@@ -1226,9 +1321,13 @@ function deleteFromLibrary(id) {
     window.pdfReader.deleteFromLibrary(id);
 }
 
-// Global functions for modal
 function closeNamingModal() {
     window.pdfReader.closeNamingModal();
+}
+
+function closeCustomModal() {
+    const modal = document.getElementById('customModal');
+    modal.classList.remove('show');
 }
 
 function confirmPdfName() {
