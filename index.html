@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Word Reader</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #controls {
+            background-color: #111;
+            padding: 20px;
+            border-bottom: 1px solid #333;
+            z-index: 10;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        label {
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        input[type="file"] {
+            color: #fff;
+            background-color: #222;
+            border: 1px solid #444;
+            padding: 5px;
+            border-radius: 3px;
+        }
+
+        input[type="number"], input[type="range"] {
+            background-color: #222;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 5px;
+            border-radius: 3px;
+            width: 80px;
+        }
+
+        select {
+            background-color: #222;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        button {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+
+        button:hover {
+            background-color: #444;
+        }
+
+        button:disabled {
+            background-color: #222;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        #display {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        #wordDisplay {
+            font-size: 48px;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+            text-align: center;
+            position: relative;
+            letter-spacing: 0.1em;
+        }
+
+        #playbackControls {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 5;
+        }
+
+        .play-btn, .pause-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #333;
+            color: #fff;
+            border: 2px solid #555;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .play-btn:hover, .pause-btn:hover {
+            background-color: #444;
+            border-color: #666;
+            transform: scale(1.05);
+        }
+
+        .play-btn:disabled, .pause-btn:disabled {
+            background-color: #222;
+            color: #666;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        #status {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #666;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #progress {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #666;
+            font-size: 12px;
+        }
+
+        #libraryModal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+        }
+
+        #libraryContent {
+            background-color: #111;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .library-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .library-item {
+            background-color: #222;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .library-item:hover {
+            background-color: #333;
+        }
+
+        .library-item-info {
+            flex: 1;
+            color: #fff;
+        }
+
+        .library-item-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .library-item-meta {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .library-item-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .close-modal {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 10px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            background-color: #444;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <div class="control-group">
+            <label for="pdfFile">Select PDF:</label>
+            <input type="file" id="pdfFile" accept=".pdf">
+            
+            <label for="wpm">Words Per Minute:</label>
+            <input type="number" id="wpm" value="300" min="50" max="1000" step="10">
+            
+            <label for="wordDelay">Word Delay (ms):</label>
+            <input type="number" id="wordDelay" value="200" min="50" max="5000" step="50" readonly>
+            
+            <label for="centerColor">Center Color:</label>
+            <select id="centerColor">
+                <option value="#FF0000">Red</option>
+                <option value="#00FF00">Green</option>
+                <option value="#0080FF">Blue</option>
+                <option value="#FFFF00">Yellow</option>
+                <option value="#FF00FF">Magenta</option>
+                <option value="#00FFFF">Cyan</option>
+                <option value="#FFA500">Orange</option>
+                <option value="#800080">Purple</option>
+                <option value="#FFC0CB">Pink</option>
+                <option value="#E0B0FF">Mauve</option>
+                <option value="#40E0D0">Turquoise</option>
+                <option value="#FFD700">Gold</option>
+                <option value="swatch">Swatch</option>
+            </select>
+            
+            <label for="fontSize">Font Size:</label>
+            <input type="number" id="fontSize" value="48" min="12" max="120" step="2">
+            
+            <button id="startBtn" disabled>Start</button>
+            <button id="pauseBtn" disabled>Pause</button>
+            <button id="resetBtn" disabled>Reset</button>
+            <button id="libraryBtn">Library</button>
+            <button id="saveToLibraryBtn" disabled>Save to Library</button>
+        </div>
+    </div>
+
+    <div id="display">
+        <div id="wordDisplay">Upload a PDF to begin</div>
+        <div id="playbackControls">
+            <button id="playBtn" class="play-btn" disabled>▶</button>
+            <button id="centerPauseBtn" class="pause-btn" disabled>❚❚</button>
+        </div>
+        <div id="status"></div>
+        <div id="progress"></div>
+    </div>
+
+    <!-- Library Modal -->
+    <div id="libraryModal">
+        <div id="libraryContent">
+            <div class="library-header">
+                <h2>My PDF Library</h2>
+                <button class="close-modal" onclick="closeLibraryModal()">Close</button>
+            </div>
+            <div id="libraryList"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
