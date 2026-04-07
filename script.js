@@ -804,16 +804,18 @@ class PDFWordReader {
             const lastRead = pdf.lastRead ? new Date(pdf.lastRead).toLocaleDateString() : 'Never';
             
             item.innerHTML = `
-                <div class="library-item-info">
-                    <div class="library-item-title">${pdf.name}</div>
-                    <div class="library-item-meta">
-                        ${pdf.wordCount.toLocaleString()} words • Added: ${dateAdded} • Last read: ${lastRead}
-                        ${pdf.readingProgress > 0 ? ` • Progress: ${Math.round(pdf.readingProgress)}%` : ''}
+                <div class="library-item-header">
+                    <div class="library-item-info">
+                        <div class="library-item-title">${pdf.name}</div>
+                        <div class="library-item-meta">
+                            ${pdf.wordCount.toLocaleString()} words • Added: ${dateAdded} • Last read: ${lastRead}
+                            ${pdf.readingProgress > 0 ? ` • Progress: ${Math.round(pdf.readingProgress)}%` : ''}
+                        </div>
                     </div>
-                </div>
-                <div class="library-item-actions">
-                    <button onclick="event.stopPropagation(); renameFromLibrary(${pdf.id})">Rename</button>
-                    <button onclick="event.stopPropagation(); deleteFromLibrary(${pdf.id})">Delete</button>
+                    <div class="library-item-actions">
+                        <button onclick="event.stopPropagation(); renameFromLibrary(${pdf.id})">Rename</button>
+                        <button onclick="event.stopPropagation(); deleteFromLibrary(${pdf.id})">Delete</button>
+                    </div>
                 </div>
             `;
             

@@ -1,78 +1,143 @@
-# Read Racer - PDF Word Reader
+# Read Racer - Speed Reading Application
 
-A web application that displays PDF content one word at a time with customizable timing settings.
+A modern, feature-rich speed reading application that helps you read PDFs faster using advanced display techniques and a beautiful, intuitive interface.
 
-## Features
+## ✨ Features
 
-- **PDF Upload**: Accept any PDF file for parsing
-- **Word-by-Word Display**: Shows text one word at a time with adjustable delays
-- **Centered Display**: Words appear in the center of a black screen
-- **Monospace Font**: Uses Courier New for consistent character spacing
-- **Center Anchoring**: Maintains consistent center positioning for all words
-- **Customizable Timing**: Adjustable word delay (50ms - 5000ms)
-- **WPM Control**: Words per minute setting (50-1000 WPM)
-- **Font Size Control**: Adjustable font size (12px - 120px)
-- **Color Customization**: Center character color options with swatch support
-- **Playback Controls**: Start, Pause/Resume, and Reset functionality
-- **Keyboard Shortcuts**: Escape, Enter, and Spacebar for playback control
-- **Progress Tracking**: Shows current word position and completion percentage
-- **Local Library**: IndexedDB storage for PDFs and reading progress
-- **Privacy-Focused**: All processing happens locally in your browser
+### 🎯 Core Reading Experience
+- **Speed Reading Display**: Optimized word-by-word display with adjustable WPM (Words Per Minute)
+- **Context Preview**: Shows surrounding words for better comprehension
+- **Smooth Transitions**: Customizable animations for comfortable reading
+- **Reading Progress Tracking**: Visual progress bar and percentage tracking
+- **Keyboard Navigation**: Full keyboard support for hands-free operation
 
-## Live Demo
+### 📚 PDF Library Management
+- **IndexedDB Storage**: Persistent offline storage for all your PDFs
+- **Auto-Save Workflow**: PDFs are automatically saved with custom names
+- **Smart Title Cleaning**: Replaces underscores with spaces for readable titles
+- **Progress Tracking**: Remembers your reading position in each PDF
+- **Quick Actions**: Rename, delete, and load PDFs with one click
+- **Beautiful Card Layout**: Modern glassmorphism design with hover effects
 
-🚀 **Try it now:** https://0xwhisperer.github.io/ReadRacer/
+### 🎨 Design & UI
+- **Glassmorphism Theme**: Modern frosted glass effects throughout
+- **Dark/Light Modes**: Full theme support with smooth transitions
+- **Responsive Design**: Works perfectly on all screen sizes
+- **Custom Modal System**: No browser alerts - beautiful custom dialogs
+- **Micro-interactions**: Smooth hover effects and transitions
+- **Professional Typography**: Optimized fonts for extended reading
 
-## How to Use
+### ⚙️ Customization
+- **Reading Speed**: Adjustable WPM from 100-1000 words per minute
+- **Font Size**: Customizable text size from 12px to 120px
+- **Word Delay**: Extra time for longer words
+- **Center Color**: Choose highlight colors for focused reading
+- **Theme Selection**: Switch between dark and light themes
+- **Settings Persistence**: All preferences are automatically saved
 
-1. **Start the application**:
-   ```bash
-   npm start
-   ```
-   or
-   ```bash
-   python -m http.server 8000
-   ```
+## 🚀 Getting Started
 
-2. **Open in browser**: Navigate to `http://localhost:8000`
+### Installation
+1. Clone or download the repository
+2. Open `index.html` in your modern web browser
+3. No additional setup required - everything works offline!
 
-3. **Load a PDF**: Click "Choose File" and select any PDF document
+### Basic Usage
+1. **Upload a PDF**: Click "Upload PDF" or click the center text
+2. **Name Your PDF**: Enter a custom name in the modal (auto-cleans filenames)
+3. **Start Reading**: Adjust your WPM and click Start or press Space
+4. **Navigate**: Use arrow buttons or keyboard shortcuts
+5. **Track Progress**: Your reading position is automatically saved
 
-4. **Configure settings**:
-   - Adjust word delay (time between words)
-   - Set font size for comfortable reading
+## 🎮 Controls
 
-5. **Start reading**: Click "Start" to begin the word-by-word display
+### Keyboard Shortcuts
+- **Space**: Start/Pause reading
+- **←/→**: Navigate words (when paused)
+- **Shift + ←/→**: Navigate 10 words
+- **Escape**: Close side panel
 
-## Controls
+### Navigation Buttons
+- **Start**: Begin speed reading from current position
+- **Pause**: Temporarily stop reading
+- **Reset**: Return to beginning
+- **←10/←/→/→10**: Navigate by words
 
-- **Start**: Begin displaying words from the beginning
-- **Pause/Resume**: Pause the display or resume from current position
-- **Reset**: Return to the beginning and stop playback
-- **WPM Control**: Words per minute setting (50-1000 WPM)
-- **Word Delay**: Automatically calculated from WPM (milliseconds)
-- **Font Size**: Text size in pixels (12-120px)
+## 📱 Interface
 
-## Technical Details
+### Main Display
+- **Center Text**: Current word being displayed
+- **Context Preview**: Surrounding words for context
+- **Progress Bar**: Visual reading progress
+- **PDF Title**: Current document name (top center)
 
-- Uses PDF.js for client-side PDF parsing
-- Pure JavaScript implementation (no server-side processing)
-- Responsive design that works on various screen sizes
-- Maintains text centering using CSS transforms for consistent positioning
+### Side Panel
+- **📚 Library Tab**: Manage your PDF collection
+- **⚙️ Settings Tab**: Customize reading experience
+- **📊 Stats Tab**: View reading statistics
 
-## Browser Compatibility
+### Library Features
+- **Click to Load**: Click any card to start reading
+- **Hover Effects**: Beautiful elevation and shadows
+- **Quick Actions**: Rename and delete buttons
+- **Progress Indicators**: See reading completion percentage
+- **Metadata Display**: Word count, dates, and progress
 
-- Chrome/Chromium (recommended)
-- Firefox
-- Safari
-- Edge
+## 🛠️ Technical Features
 
-## File Structure
+### Performance
+- **PDF.js Integration**: Robust PDF parsing and text extraction
+- **IndexedDB Storage**: Efficient client-side database
+- **Optimized Rendering**: Smooth 60fps animations
+- **Memory Management**: Efficient handling of large PDFs
 
-```
-reader/
-├── index.html      # Main application interface
-├── script.js       # Core functionality and PDF parsing
-├── package.json    # Project metadata
-└── README.md       # This documentation
-```
+### Security & Privacy
+- **100% Offline**: No data sent to external servers
+- **Local Storage**: Everything stored in your browser
+- **No Tracking**: Completely private reading experience
+- **Open Source**: Fully transparent and auditable code
+
+### Browser Compatibility
+- **Modern Browsers**: Chrome, Firefox, Safari, Edge
+- **Mobile Support**: Responsive design for phones/tablets
+- **Progressive Enhancement**: Works without JavaScript enabled (basic mode)
+
+## 🎯 Advanced Features
+
+### Reading Optimization
+- **Word Length Compensation**: Longer words get more display time
+- **Subconscious Processing**: Optimized display timing
+- **Comprehension Mode**: Balance between speed and understanding
+- **Fatigue Reduction**: Regular pause recommendations
+
+### Library Management
+- **Smart Search**: Quick PDF finding (coming soon)
+- **Collections**: Organize PDFs by category (coming soon)
+- **Export/Import**: Backup your library (coming soon)
+- **Reading Statistics**: Track speed and progress over time
+
+## 🤝 Contributing
+
+This is an open-source project! Contributions are welcome:
+- Bug reports and feature requests
+- Code improvements and optimizations
+- UI/UX enhancements
+- Documentation improvements
+
+## 📄 License
+
+MIT License - feel free to use, modify, and distribute.
+
+## 🔮 Future Updates
+
+- [ ] Text-to-speech integration
+- [ ] Reading comprehension quizzes
+- [ ] Multi-language support
+- [ ] Cloud sync (optional)
+- [ ] Advanced statistics dashboard
+- [ ] Reading goals and achievements
+- [ ] Social reading features
+
+---
+
+**Read Racer** - Transform your reading experience with modern speed reading technology. 🚀📚
