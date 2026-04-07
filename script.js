@@ -89,15 +89,36 @@ class PDFWordReader {
 
     attachEventListeners() {
         this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
-        this.startBtn.addEventListener('click', () => this.start());
-        this.pauseBtn.addEventListener('click', () => this.pause());
-        this.resetBtn.addEventListener('click', () => this.reset());
-        this.playBtn.addEventListener('click', () => this.start());
-        this.centerPauseBtn.addEventListener('click', () => this.pause());
-        this.fontSizeInput.addEventListener('input', (e) => this.updateFontSize(e.target.value));
-        this.wpmInput.addEventListener('input', (e) => this.updateWPM(e.target.value));
-        this.centerColorSelect.addEventListener('change', (e) => this.updateCenterColor(e.target.value));
-        this.saveToLibraryBtn.addEventListener('click', () => this.saveToLibrary());
+        
+        // Handle both old and new button layouts
+        if (this.startBtn) {
+            this.startBtn.addEventListener('click', () => this.start());
+        }
+        if (this.pauseBtn) {
+            this.pauseBtn.addEventListener('click', () => this.pause());
+        }
+        if (this.playBtn) {
+            this.playBtn.addEventListener('click', () => this.start());
+        }
+        if (this.centerPauseBtn) {
+            this.centerPauseBtn.addEventListener('click', () => this.pause());
+        }
+        
+        if (this.resetBtn) {
+            this.resetBtn.addEventListener('click', () => this.reset());
+        }
+        if (this.fontSizeInput) {
+            this.fontSizeInput.addEventListener('input', (e) => this.updateFontSize(e.target.value));
+        }
+        if (this.wpmInput) {
+            this.wpmInput.addEventListener('input', (e) => this.updateWPM(e.target.value));
+        }
+        if (this.centerColorSelect) {
+            this.centerColorSelect.addEventListener('change', (e) => this.updateCenterColor(e.target.value));
+        }
+        if (this.saveToLibraryBtn) {
+            this.saveToLibraryBtn.addEventListener('click', () => this.saveToLibrary());
+        }
         
         // New UX event listeners (check if they exist)
         if (this.menuToggle) {
@@ -122,11 +143,13 @@ class PDFWordReader {
         }
         
         // Click to pause
-        this.wordDisplay.addEventListener('click', () => {
-            if (this.settings.clickToPause && (this.isPlaying || this.isPaused)) {
-                this.pause();
-            }
-        });
+        if (this.wordDisplay) {
+            this.wordDisplay.addEventListener('click', () => {
+                if (this.settings.clickToPause && (this.isPlaying || this.isPaused)) {
+                    this.pause();
+                }
+            });
+        }
         
         // Tab switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -239,11 +262,12 @@ class PDFWordReader {
             this.stats.sessionStart = Date.now();
         }
         
-        this.startBtn.disabled = true;
-        this.pauseBtn.disabled = false;
-        this.playBtn.disabled = true;
-        this.centerPauseBtn.disabled = false;
-        this.resetBtn.disabled = false;
+        // Handle both old and new button layouts
+        if (this.startBtn) this.startBtn.disabled = true;
+        if (this.pauseBtn) this.pauseBtn.disabled = false;
+        if (this.playBtn) this.playBtn.disabled = true;
+        if (this.centerPauseBtn) this.centerPauseBtn.disabled = false;
+        if (this.resetBtn) this.resetBtn.disabled = false;
         
         // Enable navigation controls if they exist
         if (this.back10Btn) this.back10Btn.disabled = false;
@@ -256,16 +280,20 @@ class PDFWordReader {
 
     pause() {
         this.isPaused = !this.isPaused;
-        this.pauseBtn.textContent = this.isPaused ? 'Resume' : 'Pause';
+        
+        // Handle both old and new button layouts
+        if (this.pauseBtn) {
+            this.pauseBtn.textContent = this.isPaused ? 'Resume' : 'Pause';
+        }
         
         if (this.isPaused) {
             clearTimeout(this.displayTimeout);
-            this.playBtn.disabled = false;
-            this.centerPauseBtn.disabled = true;
+            if (this.playBtn) this.playBtn.disabled = false;
+            if (this.centerPauseBtn) this.centerPauseBtn.disabled = true;
         } else {
             this.displayNextWord();
-            this.playBtn.disabled = true;
-            this.centerPauseBtn.disabled = false;
+            if (this.playBtn) this.playBtn.disabled = true;
+            if (this.centerPauseBtn) this.centerPauseBtn.disabled = false;
         }
     }
 
@@ -275,34 +303,30 @@ class PDFWordReader {
         this.isPaused = false;
         this.currentWordIndex = 0;
         
-        this.startBtn.disabled = false;
-        this.pauseBtn.disabled = true;
-        this.pauseBtn.textContent = 'Pause';
-        this.resetBtn.disabled = true;
-        this.playBtn.disabled = false;
-        this.centerPauseBtn.disabled = true;
-        
-        this.wordDisplay.textContent = this.words.length > 0 ? 
-            `Ready: ${this.words.length} words loaded` : 'Upload a PDF to begin';
-        this.updateProgress();
-        this.updateStatus('');
-    }
-
-    displayNextWord() {
-        if (!this.isPlaying || this.isPaused) return;
-        
-        if (this.currentWordIndex >= this.words.length) {
-            this.complete();
-            return;
+        // Handle both old and new button layouts
+        if (this.startBtn) this.startBtn.disabled = false;
+        if (this.pauseBtn) {
+            this.pauseBtn.disabled = true;
+            this.pauseBtn.textContent = 'Pause';
         }
-
-        const word = this.words[this.currentWordIndex];
-        this.displayWord(word);
+        if (this.resetBtn) this.resetBtn.disabled = false;
+        if (this.playBtn) this.playBtn.disabled = false;
+        if (this.centerPauseBtn) this.centerPauseBtn.disabled = true;
+        
+        // Disable navigation controls if they exist
+        if (this.back10Btn) this.back10Btn.disabled = true;
+        if (this.back1Btn) this.back1Btn.disabled = true;
+        if (this.forward1Btn) this.forward1Btn.disabled = true;
+        if (this.forward10Btn) this.forward10Btn.disabled = true;
+        
+        if (this.words.length > 0) {
+            this.displayWord(this.words[0]);
+        } else {
+            this.wordDisplay.textContent = 'Upload a PDF to begin';
+        }
+        
+        this.updateStatus('Ready to start');
         this.updateProgress();
-        this.currentWordIndex++;
-
-        const delay = parseInt(this.wordDelayInput.value);
-        this.displayTimeout = setTimeout(() => this.displayNextWord(), delay);
     }
 
     displayWord(word) {
@@ -387,8 +411,8 @@ class PDFWordReader {
     }
 
     enableControls(enabled) {
-        this.startBtn.disabled = !enabled;
-        this.resetBtn.disabled = !enabled;
+        if (this.startBtn) this.startBtn.disabled = !enabled;
+        if (this.resetBtn) this.resetBtn.disabled = !enabled;
     }
 
     // Library Management Methods
@@ -794,11 +818,13 @@ class PDFWordReader {
 
     complete() {
         this.isPlaying = false;
-        this.startBtn.disabled = false;
-        this.pauseBtn.disabled = true;
-        this.resetBtn.disabled = false;
-        this.playBtn.disabled = false;
-        this.centerPauseBtn.disabled = true;
+        
+        // Handle both old and new button layouts
+        if (this.startBtn) this.startBtn.disabled = false;
+        if (this.pauseBtn) this.pauseBtn.disabled = true;
+        if (this.resetBtn) this.resetBtn.disabled = false;
+        if (this.playBtn) this.playBtn.disabled = false;
+        if (this.centerPauseBtn) this.centerPauseBtn.disabled = true;
         
         this.wordDisplay.textContent = 'Complete!';
         this.updateStatus('Finished displaying all words');
