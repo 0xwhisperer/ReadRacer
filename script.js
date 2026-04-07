@@ -90,6 +90,14 @@ class PDFWordReader {
         // Library upload button (new feature)
         this.libraryPdfFile = document.getElementById('libraryPdfFile');
         
+        // Naming modal elements
+        this.namingModal = document.getElementById('namingModal');
+        this.pdfNameInput = document.getElementById('pdfNameInput');
+        
+        // Temporary storage for uploaded PDF before naming
+        this.tempPDF = null;
+        this.tempPDFName = null;
+        
         // Library and settings modals (may not exist in newer versions)
         this.libraryModal = document.getElementById('libraryModal');
         this.libraryList = document.getElementById('libraryList');
@@ -138,7 +146,7 @@ class PDFWordReader {
             });
         }
         if (this.saveToLibraryBtn) {
-            this.saveToLibraryBtn.addEventListener('click', () => this.saveToLibrary());
+            // Save button removed - now auto-saving on upload
         }
         
         // Library upload button
@@ -242,16 +250,11 @@ class PDFWordReader {
 
         try {
             const arrayBuffer = await file.arrayBuffer();
-            // Create a copy of the ArrayBuffer for library storage
-            this.currentPDF = arrayBuffer.slice(0);
-            this.currentPDFName = file.name;
+            // Store temporarily until user names it
+            this.tempPDF = arrayBuffer.slice(0);
+            this.tempPDFName = file.name;
             
-            // Enable save button when PDF is loaded
-            if (this.saveToLibraryBtn) {
-                this.saveToLibraryBtn.disabled = false;
-                this.saveToLibraryBtn.textContent = '💾 Save Current';
-            }
-            
+            // Process the PDF to get word count
             const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
             
             // Extract text from all pages
@@ -265,18 +268,11 @@ class PDFWordReader {
                     .map(item => item.str)
                     .join(' ');
                 
-                // Split into words and filter out empty strings
-                const pageWords = pageText
-                    .split(/\s+/)
-                    .filter(word => word.trim().length > 0);
-                
-                this.words.push(...pageWords);
+                this.words.push(...pageText.split(/\s+/).filter(word => word.length > 0));
             }
-
-            this.updateStatus(`Loaded ${this.words.length} words`);
-            this.wordDisplay.textContent = `Ready: ${this.words.length} words loaded`;
-            this.enableControls(true);
-            this.saveToLibraryBtn.disabled = false;
+            
+            // Show naming modal
+            this.showNamingModal();
             
         } catch (error) {
             console.error('Error loading PDF:', error);
@@ -1074,8 +1070,13 @@ function deleteFromLibrary(id) {
     window.pdfReader.deleteFromLibrary(id);
 }
 
-function renameFromLibrary(id) {
-    window.pdfReader.renameFromLibrary(id);
+// Global functions for modal
+function closeNamingModal() {
+    window.pdfReader.closeNamingModal();
+}
+
+function confirmPdfName() {
+    window.pdfReader.confirmPdfName();
 }
 
 // Global functions for settings
