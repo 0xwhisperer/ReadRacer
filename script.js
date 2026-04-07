@@ -25,7 +25,13 @@ class PDFWordReader {
             readingStreak: false,
             breakReminders: false,
             highContrast: false,
-            largeTouchTargets: false
+            largeTouchTargets: false,
+            // Main controls
+            wpm: 300,
+            fontSize: 48,
+            centerColor: '#FF0000',
+            theme: 'dark',
+            fontFamily: "'Courier New', monospace"
         };
         
         // Statistics
@@ -108,13 +114,25 @@ class PDFWordReader {
             this.resetBtn.addEventListener('click', () => this.reset());
         }
         if (this.fontSizeInput) {
-            this.fontSizeInput.addEventListener('input', (e) => this.updateFontSize(e.target.value));
+            this.fontSizeInput.addEventListener('input', (e) => {
+                this.updateFontSize(e.target.value);
+                this.settings.fontSize = parseInt(e.target.value);
+                this.saveSettings();
+            });
         }
         if (this.wpmInput) {
-            this.wpmInput.addEventListener('input', (e) => this.updateWPM(e.target.value));
+            this.wpmInput.addEventListener('input', (e) => {
+                this.updateWPM(e.target.value);
+                this.settings.wpm = parseInt(e.target.value);
+                this.saveSettings();
+            });
         }
         if (this.centerColorSelect) {
-            this.centerColorSelect.addEventListener('change', (e) => this.updateCenterColor(e.target.value));
+            this.centerColorSelect.addEventListener('change', (e) => {
+                this.updateCenterColor(e.target.value);
+                this.settings.centerColor = e.target.value;
+                this.saveSettings();
+            });
         }
         if (this.saveToLibraryBtn) {
             this.saveToLibraryBtn.addEventListener('click', () => this.saveToLibrary());
@@ -432,9 +450,11 @@ class PDFWordReader {
             option.textContent = `Custom: ${color}`;
             this.centerColorSelect.add(option);
             this.centerColorSelect.value = color;
+            // Save the custom color
+            this.settings.centerColor = color;
+            this.saveSettings();
         } else if (color) {
             alert('Invalid color format. Please use hex format like #FF5733');
-            this.centerColorSelect.value = '#FF0000'; // Reset to red
         }
     }
 
@@ -684,10 +704,10 @@ class PDFWordReader {
     }
 
     applySettings() {
-        // Apply settings to UI
+        // Apply toggle settings to UI
         Object.keys(this.settings).forEach(key => {
             const toggle = document.getElementById(key);
-            if (toggle) {
+            if (toggle && toggle.classList) {
                 if (this.settings[key]) {
                     toggle.classList.add('active');
                 } else {
@@ -696,12 +716,41 @@ class PDFWordReader {
             }
         });
 
+        // Apply main control settings
+        if (this.wpmInput) {
+            this.wpmInput.value = this.settings.wpm;
+            this.updateWPM(this.settings.wpm);
+        }
+        if (this.fontSizeInput) {
+            this.fontSizeInput.value = this.settings.fontSize;
+            this.updateFontSize(this.settings.fontSize);
+        }
+        if (this.centerColorSelect) {
+            this.centerColorSelect.value = this.settings.centerColor;
+        }
+        if (this.wordDisplay) {
+            this.wordDisplay.style.fontFamily = this.settings.fontFamily;
+        }
+
         // Apply visual settings
-        this.progressBar.style.display = this.settings.showProgressBar ? 'block' : 'none';
-        this.statsDisplay.style.display = this.settings.showStats ? 'block' : 'none';
+        if (this.progressBar) {
+            this.progressBar.style.display = this.settings.showProgressBar ? 'block' : 'none';
+        }
+        if (this.statsDisplay) {
+            this.statsDisplay.style.display = this.settings.showStats ? 'block' : 'none';
+        }
         
         const navControls = document.querySelector('.nav-controls');
-        navControls.style.display = this.settings.showNavControls ? 'flex' : 'none';
+        if (navControls) {
+            navControls.style.display = this.settings.showNavControls ? 'flex' : 'none';
+        }
+        
+        // Apply theme
+        if (this.settings.theme === 'light') {
+            document.body.classList.add('theme-light');
+        } else {
+            document.body.classList.remove('theme-light');
+        }
         
         if (this.settings.focusMode) {
             document.body.classList.add('focus-mode');
@@ -936,6 +985,9 @@ function changeFont(fontFamily) {
 function updateCenterColor(color) {
     if (color === 'swatch') {
         window.pdfReader.showColorPicker();
+    } else {
+        window.pdfReader.settings.centerColor = color;
+        window.pdfReader.saveSettings();
     }
     // Color will be applied on next word display
 }
