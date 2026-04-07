@@ -901,21 +901,8 @@ class PDFWordReader {
             // Note: saveToLibraryBtn was removed - no longer needed
             
         } catch (error) {
-            const store = transaction.objectStore('pdfs');
-            const request = store.delete(id);
-            
-            request.onsuccess = () => {
-                this.updateStatus('PDF deleted from library');
-                this.openLibrary(); // Refresh the library display
-            };
-            
-            request.onerror = () => {
-                this.updateStatus('Error deleting from library');
-            };
-            
-        } catch (error) {
-            console.error('Error deleting from library:', error);
-            this.updateStatus('Error deleting from library');
+            console.error('Error loading PDF:', error);
+            this.updateStatus('Error loading PDF');
         }
     }
 
