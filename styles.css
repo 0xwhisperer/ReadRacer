@@ -24,15 +24,25 @@
     box-sizing: border-box;
 }
 
+html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
 body {
     background-color: #0b0f18;
     color: #f0f2f5;
     font-family: 'Courier New', monospace;
     overflow: hidden;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     padding: 0;
+    overscroll-behavior: none;
 }
 
         #controls {
@@ -1583,6 +1593,9 @@ button {
             transition: right 0.3s ease;
             z-index: 1200;
             overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
             box-shadow: -18px 0 48px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.08);
         }
 
@@ -4428,20 +4441,24 @@ button {
             }
 
             .center-controls {
-                bottom: calc((var(--app-edge-gap) * 3) + 24px);
+                bottom: calc((var(--app-edge-gap) * 3) + 24px + env(safe-area-inset-bottom, 0px));
                 padding: 12px 18px;
             }
 
             #progressBar {
-                bottom: calc(var(--app-edge-gap) * 2);
+                bottom: calc((var(--app-edge-gap) * 2) + env(safe-area-inset-bottom, 0px));
                 width: calc(100% - (var(--app-edge-gap) * 2));
             }
 
             #progress {
-                bottom: var(--app-edge-gap);
+                bottom: calc(var(--app-edge-gap) + env(safe-area-inset-bottom, 0px));
                 width: calc(100% - (var(--app-edge-gap) * 2));
                 font-size: 11px;
                 line-height: 1.3;
+            }
+
+            #display {
+                padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
             }
 
             .library-load-buttons .upload-btn-small {
