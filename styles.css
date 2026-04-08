@@ -2726,7 +2726,7 @@ button {
             display: flex;
             gap: 12px;
             justify-content: flex-end;
-            margin-top: 0;
+            margin-top: 14px;
             padding-top: 0;
         }
 
@@ -3060,6 +3060,7 @@ button {
             display: flex;
             gap: 12px;
             justify-content: flex-end;
+            margin-top: 14px;
         }
 
         .modal-btn.confirm {
@@ -4332,7 +4333,7 @@ button {
 
             .modal-actions {
                 gap: 14px;
-                margin-top: 12px;
+                margin-top: 16px;
             }
 
             .modal-btn {
