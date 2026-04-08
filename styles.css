@@ -1,15 +1,16 @@
 :root {
-    --page-gutter: 20px;
+    --app-edge-gap: 20px;
+    --page-gutter: var(--app-edge-gap);
     --header-control-gap: 12px;
-    --topbar-padding-y: 12px;
-    --topbar-height: 61px;
+    --topbar-padding-y: var(--app-edge-gap);
+    --topbar-height: calc(36px + (var(--app-edge-gap) * 2));
     --chrome-text-size: 12px;
     --reader-title-size: 18px;
     --reader-title-line-height: 1.4;
-    --reader-title-offset: 14px;
+    --reader-title-offset: var(--app-edge-gap);
     --reader-title-block-height: var(--reader-title-size);
-    --reader-ui-gap: 14px;
-    --reader-title-control-gap: 22px;
+    --reader-ui-gap: var(--app-edge-gap);
+    --reader-title-control-gap: var(--app-edge-gap);
     --panel-stack-gap: 14px;
     --chrome-text-color: #7a7a7a;
     --chrome-text-weight: 400;
@@ -31,6 +32,7 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
+    padding: 0;
 }
 
         #controls {
@@ -115,7 +117,7 @@ button {
     justify-content: center;
     align-items: center;
     position: relative;
-    padding-top: calc(var(--topbar-height) + 24px);
+    padding-top: calc(var(--topbar-height) + (var(--app-edge-gap) * 2));
     overflow: hidden;
 }
 
@@ -253,7 +255,7 @@ button {
 
 #progress {
     position: absolute;
-    bottom: 20px;
+    bottom: var(--app-edge-gap);
     left: 50%;
     transform: translateX(-50%);
     color: var(--chrome-text-color);
@@ -426,10 +428,10 @@ button {
 
 #progressBar {
     position: absolute;
-    bottom: 32px;
+    bottom: calc(var(--app-edge-gap) * 2);
     left: 50%;
     transform: translateX(-50%);
-    width: 80%;
+    width: calc(100% - (var(--app-edge-gap) * 2));
     max-width: 600px;
     height: 24px;
     background: transparent;
@@ -860,6 +862,7 @@ button {
 
         .notes-btn {
             padding: 0;
+            order: -1;
         }
 
         .notes-btn svg {
@@ -868,6 +871,53 @@ button {
 
         .bookmark-btn {
             padding: 0;
+        }
+
+        @media (min-width: 1025px) {
+            #topBar {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                align-items: center;
+                column-gap: var(--header-control-gap);
+            }
+
+            .topbar-brand {
+                justify-self: start;
+            }
+
+            .topbar-brand,
+            .pdf-search-shell,
+            .pdf-search-panel,
+            .topbar-actions {
+                gap: var(--header-control-gap);
+                margin: 0;
+            }
+
+            .topbar-brand {
+                min-width: 0;
+            }
+
+            .pdf-search-shell {
+                flex: 0 0 auto;
+            }
+
+            .pdf-search-panel {
+                flex: 0 0 auto;
+            }
+
+            .pdf-search-count {
+                min-width: 68px;
+                margin: 0;
+            }
+
+            .topbar-actions {
+                justify-self: end;
+                margin-left: 0;
+            }
+
+            .bookmark-btn {
+                order: 0;
+            }
         }
 
         .bookmark-btn svg {
@@ -900,7 +950,7 @@ button {
         }
 
         .pdf-search-shell.open .pdf-search-panel {
-            width: 436px;
+            width: 424px;
             opacity: 1;
             pointer-events: auto;
         }
@@ -1499,7 +1549,7 @@ button {
         /* Center Bottom Controls */
         .center-controls {
             position: fixed;
-            bottom: calc(32px + 24px + var(--reader-ui-gap));
+            bottom: calc((var(--app-edge-gap) * 3) + 24px);
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -3567,13 +3617,14 @@ button {
         /* Responsive */
         @media (max-width: 1024px) {
             :root {
-                --page-gutter: 14px;
+                --app-edge-gap: 14px;
+                --page-gutter: var(--app-edge-gap);
                 --header-control-gap: 8px;
-                --topbar-padding-y: 10px;
-                --topbar-height: 56px;
+                --topbar-padding-y: var(--app-edge-gap);
+                --topbar-height: calc(36px + (var(--app-edge-gap) * 2));
                 --reader-title-size: 16px;
-                --reader-title-offset: 10px;
-                --reader-title-control-gap: var(--reader-title-offset);
+                --reader-title-offset: var(--app-edge-gap);
+                --reader-title-control-gap: var(--app-edge-gap);
             }
 
             #topBar {
@@ -3597,9 +3648,15 @@ button {
                 align-items: center;
             }
 
+        .notes-btn {
+            order: -1;
+        }
+
+        @media (min-width: 1025px) {
             .notes-btn {
                 order: -1;
             }
+        }
 
             .bookmark-btn {
                 display: none;
@@ -3843,13 +3900,13 @@ button {
             }
 
             #progressBar {
-                bottom: 46px;
-                width: calc(100% - 56px);
+                bottom: calc(var(--app-edge-gap) + 12px);
+                width: calc(100% - (var(--app-edge-gap) * 2));
             }
 
             #progress {
-                bottom: 18px;
-                width: calc(100% - 56px);
+                bottom: var(--app-edge-gap);
+                width: calc(100% - (var(--app-edge-gap) * 2));
                 max-width: 600px;
                 text-align: center;
             }
@@ -3924,13 +3981,14 @@ button {
 
         @media (min-width: 521px) and (max-width: 1024px) {
             :root {
-                --page-gutter: 28px;
+                --app-edge-gap: 28px;
+                --page-gutter: var(--app-edge-gap);
                 --header-control-gap: 14px;
-                --topbar-padding-y: 16px;
-                --topbar-height: 76px;
+                --topbar-padding-y: var(--app-edge-gap);
+                --topbar-height: calc(50px + (var(--app-edge-gap) * 2));
                 --reader-title-size: 20px;
-                --reader-title-offset: 28px;
-                --reader-title-control-gap: 24px;
+                --reader-title-offset: var(--app-edge-gap);
+                --reader-title-control-gap: var(--app-edge-gap);
             }
 
             #topBar {
@@ -4123,13 +4181,13 @@ button {
             }
 
             #progressBar {
-                bottom: 54px;
-                width: calc(100% - 120px);
+                bottom: calc(var(--app-edge-gap) * 2);
+                width: calc(100% - (var(--app-edge-gap) * 2));
             }
 
             #progress {
-                bottom: 20px;
-                width: calc(100% - 120px);
+                bottom: var(--app-edge-gap);
+                width: calc(100% - (var(--app-edge-gap) * 2));
                 font-size: 16px;
             }
 
@@ -4271,9 +4329,12 @@ button {
 
         @media (max-width: 520px) {
             :root {
-                --topbar-height: 56px;
-                --reader-title-offset: 8px;
-                --reader-title-control-gap: var(--reader-title-offset);
+                --app-edge-gap: 14px;
+                --page-gutter: var(--app-edge-gap);
+                --topbar-padding-y: var(--app-edge-gap);
+                --topbar-height: calc(34px + (var(--app-edge-gap) * 2));
+                --reader-title-offset: var(--app-edge-gap);
+                --reader-title-control-gap: var(--app-edge-gap);
             }
 
             .tabs {
@@ -4370,13 +4431,13 @@ button {
             }
 
             #progressBar {
-                bottom: 42px;
-                width: calc(100% - 44px);
+                bottom: calc(var(--app-edge-gap) * 2);
+                width: calc(100% - (var(--app-edge-gap) * 2));
             }
 
             #progress {
-                bottom: 14px;
-                width: calc(100% - 44px);
+                bottom: var(--app-edge-gap);
+                width: calc(100% - (var(--app-edge-gap) * 2));
                 font-size: 11px;
                 line-height: 1.3;
             }
