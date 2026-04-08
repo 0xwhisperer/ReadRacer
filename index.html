@@ -197,7 +197,13 @@
             <span class="nav-btn-skip-content"><span class="nav-btn-skip-arrow">←</span><span class="nav-btn-skip-value">10</span></span>
         </button>
         <button id="back1Btn" class="nav-btn-small" disabled title="Go back 1 word">←</button>
-        <button id="resetBtn" class="control-btn tertiary" disabled title="Reset to beginning">⏮</button>
+        <button id="resetBtn" class="control-btn tertiary" disabled title="Reset to beginning" aria-label="Reset to beginning">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <path d="M4.25 3.25C4.66421 3.25 5 3.58579 5 4V12C5 12.4142 4.66421 12.75 4.25 12.75C3.83579 12.75 3.5 12.4142 3.5 12V4C3.5 3.58579 3.83579 3.25 4.25 3.25Z"/>
+                <path d="M12.1156 3.45189C12.3468 3.58309 12.4898 3.82866 12.4898 4.0945V11.9055C12.4898 12.1713 12.3468 12.4169 12.1156 12.5481C11.8844 12.6793 11.6005 12.6758 11.3726 12.539L6.64242 9.63353C6.42266 9.49923 6.28882 9.25978 6.28882 9V7C6.28882 6.74022 6.42266 6.50077 6.64242 6.36647L11.3726 3.46103C11.6005 3.3242 11.8844 3.32069 12.1156 3.45189Z"/>
+                <path d="M9.36564 3.45189C9.59686 3.58309 9.73984 3.82866 9.73984 4.0945V11.9055C9.73984 12.1713 9.59686 12.4169 9.36564 12.5481C9.13442 12.6793 8.85053 12.6758 8.62261 12.539L3.89242 9.63353C3.67266 9.49923 3.53882 9.25978 3.53882 9V7C3.53882 6.74022 3.67266 6.50077 3.89242 6.36647L8.62261 3.46103C8.85053 3.3242 9.13442 3.32069 9.36564 3.45189Z"/>
+            </svg>
+        </button>
         <button id="playBtn" class="control-btn primary" disabled title="Start reading (Space)">▶</button>
         <button id="pauseBtn" class="control-btn secondary" disabled title="Pause reading (Space)">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -435,6 +441,6 @@
         <div id="progress"></div>
     </div>
 
-    <script src="script.js?v=2026-04-07-1"></script>
+    <script src="script.js?v=2026-04-07-4"></script>
 </body>
 </html>

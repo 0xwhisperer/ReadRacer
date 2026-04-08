@@ -21,6 +21,9 @@ class PDFWordReader {
         this.resumeCacheKey = 'readRacerLastViewedResume';
         this.searchCacheKey = 'readRacerPdfSearchState';
         this.contextPreviewWordCount = this.isPhoneLayout() ? 1 : 3;
+        this.seedLibraryAssetUrl = './samadhi-sample.txt';
+        this.seedLibraryItemName = 'Samadhi Unity of Consciousness and Existence (SAMPLE)';
+        this.seedLibraryVersion = 'samadhi-example-v1';
         this.searchQuery = '';
         this.searchResults = [];
         this.currentSearchResultIndex = -1;
@@ -1003,12 +1006,12 @@ class PDFWordReader {
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
                 this.db = request.result;
-                // Load library after DB is ready
-                this.openLibrary().then(() => {
-                    // Load the last viewed PDF if available
+                (async () => {
+                    await this.ensureSeedLibraryExample();
+                    await this.openLibrary();
                     this.loadLastViewedPDF();
-                });
-                resolve(this.db);
+                    resolve(this.db);
+                })().catch(reject);
             };
             
             request.onupgradeneeded = (event) => {
@@ -1021,6 +1024,61 @@ class PDFWordReader {
                 }
             };
         });
+    }
+
+    async ensureSeedLibraryExample() {
+        if (!this.db) return;
+
+        try {
+            const existingPdfs = await this.getAllStoredPdfs();
+            if (existingPdfs.length > 0) return;
+
+            const seededText = await this.buildSeedLibraryText();
+            if (!seededText || seededText.trim().length < 500) return;
+
+            const record = {
+                name: this.seedLibraryItemName,
+                data: null,
+                type: 'text',
+                textContent: seededText,
+                isSeedSample: true,
+                seedVersion: this.seedLibraryVersion,
+                wordCount: this.countReaderWordsInText(seededText),
+                dateAdded: new Date(),
+                lastRead: null,
+                readingProgress: 0,
+                lastWordIndex: 0,
+                lastReadMarkerIndex: 0,
+                bookmarks: []
+            };
+
+            await new Promise((resolve, reject) => {
+                const transaction = this.db.transaction(['pdfs'], 'readwrite');
+                const store = transaction.objectStore('pdfs');
+                const request = store.add(record);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (error) {
+            console.error('Error seeding example library item:', error);
+        }
+    }
+
+    async buildSeedLibraryText() {
+        const response = await fetch(this.seedLibraryAssetUrl, { cache: 'no-store' });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch seed text: ${response.status}`);
+        }
+
+        return String(await response.text()).trim();
+    }
+
+    countReaderWordsInText(text) {
+        return String(text || '')
+            .split(/\s+/)
+            .map((token) => token.trim())
+            .filter((token) => this.shouldKeepReaderToken(token))
+            .length;
     }
 
     handleKeyPress(e) {
@@ -2986,7 +3044,10 @@ class PDFWordReader {
                         <button class="library-item-title-button" onclick="event.stopPropagation(); renameFromLibrary(${pdf.id})">
                             <span class="library-item-title">${this.escapeHtml(pdf.name)}</span>
                         </button>
-                        <button class="library-delete-btn" aria-label="Delete item" onclick="event.stopPropagation(); deleteFromLibrary(${pdf.id})">×</button>
+                        ${pdf.isSeedSample
+                            ? ''
+                            : `<button class="library-delete-btn" aria-label="Delete item" onclick="event.stopPropagation(); deleteFromLibrary(${pdf.id})">×</button>`
+                        }
                     </div>
                     <div class="library-item-info">
                         <div class="library-item-meta">
@@ -3370,6 +3431,11 @@ class PDFWordReader {
             request.onsuccess = async () => {
                 const pdfRecord = request.result;
                 if (pdfRecord) {
+                    if (pdfRecord.isSeedSample) {
+                        this.updateStatus('Sample item cannot be deleted in beta');
+                        return;
+                    }
+
                     const confirmed = await this.showCustomModal(
                         'Delete Item',
                         `Are you sure you want to delete "${pdfRecord.name}"? This action cannot be undone.`,
