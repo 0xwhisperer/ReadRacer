@@ -4428,7 +4428,7 @@ button {
             }
 
             .center-controls {
-                bottom: 80px;
+                bottom: calc((var(--app-edge-gap) * 3) + 24px);
                 padding: 12px 18px;
             }
 
